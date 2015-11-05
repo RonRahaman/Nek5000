@@ -10,8 +10,7 @@ if [ "$PPLIST" == "?" ]; then
   echo "  NOTIMER   disable runtime statistics"
   echo "  MPITIMER  enable MPI runtime statistics"
   echo "  MPIIO     use MPI-IO I/O kernel (experimental)"
-  echo "  BGL        enable Blue Gene optimizations (BG/L and BG/P)"
-  echo "  BGQ        enable Blue Gene optimizations (BG/Q)"
+  echo "  BG        enable Blue Gene optimizations (BG/L and BG/P)"
   echo "  K10_MXM   use optimized MxM kernel for AMD Family 10h processors" 
   echo "  CVODE     use ODE solver from Sundials to solve for IFIELD>1 (experimental)"
   echo "  MOAB      enable MOAB/CUBIT support (experimental)"
@@ -59,6 +58,9 @@ SOURCE_ROOT_CORE=$APATH_SRC
 APATH_SRC=`cd $SOURCE_ROOT_JL; pwd`
 SOURCE_ROOT_JL=$APATH_SRC
 echo "JL root" $SOURCE_ROOT_JL
+APATH_SRC=`cd $SOURCE_ROOT2; pwd`
+SOURCE_ROOT_CMT=$APATH_SRC
+echo "CMT root" $SOURCE_ROOT_CMT
 
 IFMOAB=false
 IFNEKNEK=false
@@ -331,23 +333,26 @@ else
   IFAMG=false
 fi
 
+# CMT flag
+if [ "$IFCMT" == "true" -o "$IFCMT" == "yes" ]; then
+  IFCMT=true
+else
+  # default
+  IFCMT=false
+fi
+export IFCMT
+
 # MXM-handling
 if [ "$MXM_USER" != "" ]; then
     echo "ABORT: makenek version is too old! Update with latest from source!"
     exit 1 
 fi
 MXM_USER="mxm_std.o blas.o"
-echo $PPLIST | grep 'BGL' >/dev/null 
+echo $PPLIST | grep 'BG' >/dev/null 
 if [ $? -eq 0 ]; then
    MXM_USER="mxm_std.o bg_aligned3.o bg_mxm44.o bg_mxm44_uneven.o bg_mxm3.o blas.o" 
    OPT_FLAGS_STD="-qarch=450 -qtune=450"
    OPT_FLAGS_MAG="-O5 -qarch=450d -qtune=450"
-fi
-echo $PPLIST | grep 'BGG' >/dev/null 
-if [ $? -eq 0 ]; then
-   MXM_USER="mxm_std.o mxm_bgq.o " 
-   OPT_FLAGS_STD="-O3"
-   OPT_FLAGS_MAG="-O3"
 fi
 echo $PPLIST | grep 'K10_MXM' >/dev/null 
 if [ $? -eq 0 ]; then
@@ -410,12 +415,14 @@ sed -e "s:^F77[ ]*=.*:F77\:=$F77:" \
 -e "s/^IFAMG[ ]*=.*/IFAMG:=$IFAMG/" \
 -e "s/^IFAMG_DUMP[ ]*=.*/IFAMG_DUMP:=$IFAMG_DUMP/" \
 -e "s/^IFMPI[ ]*=.*/IFMPI:=$IFMPI/" \
+-e "s/^IFCMT[ ]*=.*/IFCMT:=$IFCMT/" \
 -e "s/^IFMOAB[ ]*=.*/IFMOAB:=$IFMOAB/" \
 -e "s:^MOAB_DIR[ ]*=.*:MOAB_DIR\:=${MOAB_DIR}:" \
 -e "s/^IFNEKNEK[ ]*=.*/IFNEKNEK:=$IFNEKNEK/" \
 -e "s:^USR[ ]*=.*:USR\:=$USR:" \
 -e "s:^USR_LFLAGS[ ]*=.*:USR_LFLAGS\:=$USR_LFLAGS:" \
 -e "s:^S[ ]*=.*:S\:=${SOURCE_ROOT_CORE}:" \
+-e "s:^S2[ ]*=.*:S2\:=${SOURCE_ROOT_CMT}:" \
 -e "s:^J[ ]*=.*:J\:=${SOURCE_ROOT_JL}:" $SOURCE_ROOT_CORE/makefile.template >.makefile
 
 echo $G | grep '\-g' 1>/dev/null
@@ -560,6 +567,36 @@ if [ -f "./SIZE" ]; then
       echo '      parameter(cv_sigs = 0.01) ! Jacobian DQ perturbation scaling factor'  >>SIZE
   fi
   fi
+  cat SIZE | grep -i 'toteq' >/dev/null
+  if [ $? -ne 0 ]; then
+  if [ "$IFCMT" == "true" ]; then
+      echo >>SIZE
+      echo 'c automatically added by makenek' >>SIZE
+      echo '      integer toteq' >> SIZE
+      echo '      parameter(toteq = 5  ) ! Number of conserved variables '  >>SIZE
+      echo 'c IFCMT=TRUE  then toteq=5'  >>SIZE
+  else
+      echo >>SIZE
+      echo 'c automatically added by makenek' >>SIZE
+      echo '      integer toteq' >> SIZE
+      echo '      parameter(toteq = 1  ) ! Number of conserved variables '  >>SIZE
+      echo 'c IFCMT=FALSE  then toteq=1'  >>SIZE
+  fi
+  fi
+  cat SIZE | grep -i 'lelcmt' >/dev/null
+  if [ $? -ne 0 ]; then
+  if [ "$IFCMT" == "true" ]; then
+      echo >>SIZE
+      echo 'c automatically added by makenek' >>SIZE
+      echo '      parameter(lelcmt = lelt  ) ! # of cmt elements '  >>SIZE
+      echo 'c IFCMT=TRUE  then lelcmt=lelt'  >>SIZE
+  else
+      echo >>SIZE
+      echo 'c automatically added by makenek' >>SIZE
+      echo '      parameter(lelcmt = 1  ) ! # of cmt elements '  >>SIZE
+      echo 'c IFCMT=FALSE  then lelcmt=1'  >>SIZE
+  fi
+  fi
 else
   echo "FATAL ERROR: Cannot find SIZE"
   exit 1
@@ -575,6 +612,80 @@ c
 c automatically added by makenek
       subroutine usrsetvert(glo_num,nel,nx,ny,nz) ! to modify glo_num
       integer*8 glo_num(1)
+      return
+      end
+_ACEOF
+fi
+
+if [ "$IFCMT" == "true" -o "$IFCMT" == "yes" ]; then
+cat $CASENAME.f | grep -i "subroutine.*cmt_switch" >/dev/null
+if [ $? -ne 0 ]; then
+cat >> $CASENAME.f << _ACEOF
+c
+c automatically added by makenek
+      subroutine cmt_switch ! to set IFCMT logical flag
+      include 'SIZE'
+      include 'INPUT'
+      IFCMT=.true.
+      return
+      end
+_ACEOF
+fi
+else
+cat $CASENAME.f | grep -i "subroutine.*cmt_switch" >/dev/null
+if [ $? -ne 0 ]; then
+cat >> $CASENAME.f << _ACEOF
+c
+c automatically added by makenek
+      subroutine cmt_switch ! to set IFCMT logical flag
+      include 'SIZE'
+      include 'INPUT'
+      IFCMT=.false.
+      return
+      end
+_ACEOF
+fi
+fi
+
+cat $CASENAME.f | grep -i "subroutine.*usrflt" >/dev/null
+if [ $? -ne 0 ]; then
+cat >> $CASENAME.f << _ACEOF
+c
+c automatically added by makenek
+      subroutine usrflt(rmult) ! user defined filter
+      include 'SIZE'
+      real rmult(lx1)
+      call rone(rmult,lx1)
+      return
+      end
+_ACEOF
+fi
+
+cat $CASENAME.f | grep -i "subroutine.*userflux" >/dev/null
+if [ $? -ne 0 ]; then
+cat >> $CASENAME.f << _ACEOF
+c
+c automatically added by makenek
+      subroutine userflux ! user defined flux
+      include 'SIZE'
+      include 'TOTAL'
+      include 'NEKUSE'
+      real fluxout(lx1*lz1)
+      return
+      end
+_ACEOF
+fi
+
+cat $CASENAME.f | grep -i "subroutine.*userEOS" >/dev/null
+if [ $? -ne 0 ]; then
+cat >> $CASENAME.f << _ACEOF
+c
+c automatically added by makenek
+      subroutine userEOS ! user defined EOS 
+      include 'SIZE'
+      include 'TOTAL'
+      include 'NEKUSE'
+
       return
       end
 _ACEOF
