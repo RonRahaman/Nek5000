@@ -46,7 +46,8 @@ navier5.o navier6.o navier7.o navier8.o fast3d.o fasts.o calcz.o \
 byte.o chelpers.o byte_mpi.o postpro.o \
 cvode_driver.o nek_comm.o \
 init_plugin.o setprop.o qthermal.o cvode_aux.o makeq_aux.o \
-papi.o nek_in_situ.o
+papi.o nek_in_situ.o \
+readat_new.o finiparser.o iniparser.o dictionary.o
 ################################################################################
 # MXM 
 MXM = mxm_std.o 
