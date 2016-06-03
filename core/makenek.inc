@@ -12,7 +12,6 @@ if [ "$PPLIST" == "?" ]; then
   echo "  MPIIO     use MPI-IO I/O kernel (experimental)"
   echo "  BGL       enable Blue Gene optimizations (BG/L and BG/P)"
   echo "  BGQ       enable Blue Gene optimizations (BG/Q)"
-  echo "  XSMM      use libxsmm for mxm"
   echo "  K10_MXM   use optimized MxM kernel for AMD Family 10h processors" 
   echo "  CVODE     use ODE solver from Sundials to solve for IFIELD>1 (experimental)"
   echo "  MOAB      enable MOAB/CUBIT support (experimental)"
@@ -60,7 +59,7 @@ SOURCE_ROOT_CORE=$APATH_SRC
 APATH_SRC=`cd $SOURCE_ROOT_JL; pwd`
 SOURCE_ROOT_JL=$APATH_SRC
 echo "JL root" $SOURCE_ROOT_JL
-APATH_SRC=`cd $SOURCE_ROOT2; pwd`
+APATH_SRC=`cd $SOURCE_ROOT_CMT; pwd`
 SOURCE_ROOT_CMT=$APATH_SRC
 echo "CMT root" $SOURCE_ROOT_CMT
 
@@ -372,10 +371,6 @@ if [ $? -eq 0 ]; then
    OPT_FLAGS_STD="-O3"
    OPT_FLAGS_MAG="-O3"
 fi
-echo $PPLIST | grep 'XSMM' >/dev/null 
-if [ $? -eq 0 ]; then
-   MXM_USER="mxm_std.o blas.o " 
-fi
 echo $PPLIST | grep 'K10_MXM' >/dev/null 
 if [ $? -eq 0 ]; then
    MXM_USER="mxm_std.o k10_mxm.o blas.o" 
@@ -444,8 +439,8 @@ sed -e "s:^F77[ ]*=.*:F77\:=$F77:" \
 -e "s:^USR[ ]*=.*:USR\:=$USR:" \
 -e "s:^USR_LFLAGS[ ]*=.*:USR_LFLAGS\:=$USR_LFLAGS:" \
 -e "s:^S[ ]*=.*:S\:=${SOURCE_ROOT_CORE}:" \
--e "s:^J[ ]*=.*:J\:=${SOURCE_ROOT_JL}:" \
--e "s:^S2[ ]*=.*:S2\:=${SOURCE_ROOT_CMT}:" $SOURCE_ROOT/makefile.template >.makefile
+-e "s:^S2[ ]*=.*:S2\:=${SOURCE_ROOT_CMT}:" \
+-e "s:^J[ ]*=.*:J\:=${SOURCE_ROOT_JL}:" $SOURCE_ROOT_CORE/makefile.template >.makefile
 
 echo $G | grep '\-g' 1>/dev/null
 if [ $? -eq 0 ]; then
