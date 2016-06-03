@@ -6,7 +6,7 @@
 SOURCE_ROOT="$HOME/Nek5000" 
 SOURCE_ROOT_CORE="$SOURCE_ROOT/core"
 SOURCE_ROOT_JL="$SOURCE_ROOT/jl"
-SOURCE_ROOT2="$SOURCE_ROOT/core/cmt" 
+SOURCE_ROOT_CMT="$SOURCE_ROOT/core/cmt"
 
 # Fortran compiler
 F77="mpif77"
@@ -86,7 +86,7 @@ if [ -d $2 ] && [ $# -eq 2 ]; then
   echo "change source code directory to: ", $SOURCE_ROOT
   SOURCE_ROOT_CORE="$SOURCE_ROOT/core"
   SOURCE_ROOT_JL="$SOURCE_ROOT/jl"
-  SOURCE_ROOT2="$SOURCE_ROOT/core/cmt" 
+  SOURCE_ROOT_CMT="$SOURCE_ROOT/core/cmt"
 fi
 # do some checks and create makefile
 source $SOURCE_ROOT_CORE/makenek.inc
