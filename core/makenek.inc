@@ -60,6 +60,9 @@ SOURCE_ROOT_CORE=$APATH_SRC
 APATH_SRC=`cd $SOURCE_ROOT_JL; pwd`
 SOURCE_ROOT_JL=$APATH_SRC
 echo "JL root" $SOURCE_ROOT_JL
+APATH_SRC=`cd $SOURCE_ROOT_CMT; pwd`
+SOURCE_ROOT_CMT=$APATH_SRC
+echo "CMT root" $SOURCE_ROOT_CMT
 
 IFMOAB=false
 IFNEKNEK=false
@@ -441,6 +444,7 @@ sed -e "s:^F77[ ]*=.*:F77\:=$F77:" \
 -e "s:^USR[ ]*=.*:USR\:=$USR:" \
 -e "s:^USR_LFLAGS[ ]*=.*:USR_LFLAGS\:=$USR_LFLAGS:" \
 -e "s:^S[ ]*=.*:S\:=${SOURCE_ROOT_CORE}:" \
+-e "s:^S2[ ]*=.*:S2\:=${SOURCE_ROOT_CMT}:" \
 -e "s:^J[ ]*=.*:J\:=${SOURCE_ROOT_JL}:" $SOURCE_ROOT_CORE/makefile.template >.makefile
 
 echo $G | grep '\-g' 1>/dev/null
