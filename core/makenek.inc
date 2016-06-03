@@ -57,12 +57,12 @@ CASENAME=$1
 CASEDIR=`pwd`
 APATH_SRC=`cd $SOURCE_ROOT_CORE; pwd`
 SOURCE_ROOT_CORE=$APATH_SRC
-APATH_SRC=`cd $SOURCE_ROOT2; pwd`
-SOURCE_ROOT_CMT=$APATH_SRC
-echo "CMT root" $SOURCE_ROOT_CMT
 APATH_SRC=`cd $SOURCE_ROOT_JL; pwd`
 SOURCE_ROOT_JL=$APATH_SRC
 echo "JL root" $SOURCE_ROOT_JL
+APATH_SRC=`cd $SOURCE_ROOT_CMT; pwd`
+SOURCE_ROOT_CMT=$APATH_SRC
+echo "CMT root" $SOURCE_ROOT_CMT
 
 IFMOAB=false
 IFNEKNEK=false
@@ -379,7 +379,7 @@ fi
 echo $PPLIST | grep 'K10_MXM' >/dev/null 
 if [ $? -eq 0 ]; then
    MXM_USER="mxm_std.o k10_mxm.o blas.o" 
-   USR_LFLAGS="${USR_LFLAGS} ${SOURCE_ROOT}/libk10_mxm.a"
+   USR_LFLAGS="${USR_LFLAGS} ${SOURCE_ROOT_CORE}/libk10_mxm.a"
 fi
 echo $PPLIST | grep 'BLAS_MXM' >/dev/null 
 if [ $? -eq 0 ]; then
