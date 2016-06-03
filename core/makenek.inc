@@ -12,7 +12,6 @@ if [ "$PPLIST" == "?" ]; then
   echo "  MPIIO     use MPI-IO I/O kernel (experimental)"
   echo "  BGL       enable Blue Gene optimizations (BG/L and BG/P)"
   echo "  BGQ       enable Blue Gene optimizations (BG/Q)"
-  echo "  XSMM      use libxsmm for mxm"
   echo "  K10_MXM   use optimized MxM kernel for AMD Family 10h processors" 
   echo "  CVODE     use ODE solver from Sundials to solve for IFIELD>1 (experimental)"
   echo "  MOAB      enable MOAB/CUBIT support (experimental)"
@@ -57,12 +56,12 @@ CASENAME=$1
 CASEDIR=`pwd`
 APATH_SRC=`cd $SOURCE_ROOT_CORE; pwd`
 SOURCE_ROOT_CORE=$APATH_SRC
-APATH_SRC=`cd $SOURCE_ROOT2; pwd`
-SOURCE_ROOT_CMT=$APATH_SRC
-echo "CMT root" $SOURCE_ROOT_CMT
 APATH_SRC=`cd $SOURCE_ROOT_JL; pwd`
 SOURCE_ROOT_JL=$APATH_SRC
 echo "JL root" $SOURCE_ROOT_JL
+APATH_SRC=`cd $SOURCE_ROOT_CMT; pwd`
+SOURCE_ROOT_CMT=$APATH_SRC
+echo "CMT root" $SOURCE_ROOT_CMT
 
 IFMOAB=false
 IFNEKNEK=false
@@ -371,10 +370,6 @@ if [ $? -eq 0 ]; then
    MXM_USER="mxm_std.o mxm_bgq.o " 
    OPT_FLAGS_STD="-O3"
    OPT_FLAGS_MAG="-O3"
-fi
-echo $PPLIST | grep 'XSMM' >/dev/null 
-if [ $? -eq 0 ]; then
-   MXM_USER="mxm_std.o blas.o " 
 fi
 echo $PPLIST | grep 'K10_MXM' >/dev/null 
 if [ $? -eq 0 ]; then
