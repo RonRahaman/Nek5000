@@ -3,30 +3,34 @@ language: fortran
 sudo: required
 
 env:
-  global:
-    - SOURCE_ROOT=$ROOT_DIR
-    - TOOLS_ROOT=$ROOT_DIR/tools
-    - TOOLS_BIN=$ROOT_DIR/tools/bin
-    - SCRIPTS_ROOT=$ROOT_DIR/bin
-    - EXAMPLES_ROOT=$ROOT_DIR/nek_tests/examples
-    - LOG_ROOT=$ROOT_DIR/nek_tests/examples/TestLogs
-    - F77=mpif77
-    - CC=mpicc
-    - IFMPI=true
-    - PYTHONPATH="$ROOT_DIR/nek_tests:$PYTHONPATH"
   matrix:
     - TEST_CASE=TurbChannel
     - TEST_CASE=Fs2_St1
 
 before_install: 
   - export ROOT_DIR=`pwd`
+
+  - export SOURCE_ROOT=$ROOT_DIR
+  - export TOOLS_ROOT=$ROOT_DIR/tools
+  - export TOOLS_BIN=$ROOT_DIR/tools/bin
+  - export SCRIPTS_ROOT=$ROOT_DIR/bin
+  - export EXAMPLES_ROOT=$ROOT_DIR/nek_tests/examples
+  - export LOG_ROOT=$ROOT_DIR/nek_tests/examples/TestLogs
+  - export F77=mpif77
+  - export CC=mpicc
+  - export IFMPI=true
+
   - sudo apt-get update -qq
   - sudo apt-get install -y libmpich-dev mpich
+
   - virtualenv -p python2.7 $ROOT_DIR/python2-env
   - source $ROOT_DIR/python2-env/bin/activate
+  - export PYTHONPATH="$ROOT_DIR/nek_tests:$PYTHONPATH"
+
   - git clone https://github.com/RonRahaman/NekTests-deprecated.git -b unittests_plus_examples --recursive $ROOT_DIR/nek_tests
  
 install:
+  - pip install --upgrade pip
   - pip install pytest
 
 script: 
