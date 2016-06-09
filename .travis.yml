@@ -15,8 +15,8 @@ env:
     - IFMPI=true
     - PYTHONPATH="$ROOT_DIR/nek_tests:$PYTHONPATH"
   matrix:
-    - TEST_CASE=NekUnitTests.py::TurbChannel
-    - TEST_CASE=NekUnitTests.py::Fs2_St1
+    - TEST_CASE=TurbChannel
+    - TEST_CASE=Fs2_St1
 
 before_install: 
   - export ROOT_DIR=`pwd`
