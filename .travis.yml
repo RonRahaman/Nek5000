@@ -19,12 +19,12 @@ env:
     - TEST_CASE=NekUnitTests.py::Fs2_St1
 
 before_install: 
-  - echo "HOME is $HOME"
   - export ROOT_DIR=`pwd`
+  - echo "HOME is $HOME; ROOT_DIR is $ROOT_DIR"
   - sudo apt-get update -qq
   - sudo apt-get install -y libmpich-dev mpich
   - virtualenv -p python2.7 python2-env
-  - source $HOME/python2-env/bin/activate
+  - source python2-env/bin/activate
   - git clone https://github.com/RonRahaman/NekTests-deprecated.git -b unittests_plus_examples --recursive nek_tests
  
 install:
