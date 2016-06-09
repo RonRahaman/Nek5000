@@ -2,14 +2,33 @@ language: fortran
 
 sudo: required
 
-services:
-  - docker
-
 env:
- - TEST_SUITE=NekUnitTests.py::TurbChannel
+  global:
+    - SOURCE_ROOT=$HOME/nek5000
+    - TOOLS_ROOT=$HOME/nek5000/tools
+    - TOOLS_BIN=$HOME/nek5000/tools/bin
+    - SCRIPTS_ROOT=$HOME/nek5000/bin
+    - EXAMPLES_ROOT=$HOME/nek_tests/examples
+    - LOG_ROOT=$HOME/nek_tests/examples/TestLogs
+    - F77=mpif77
+    - CC=mpicc
+    - IFMPI=true
+    - PYTHONPATH="$HOME/nek_tests:$PYTHONPATH"
+  matrix:
+    - TEST_CASE=NekUnitTests.py::TurbChannel
+    - TEST_CASE=NekUnitTests.py::Fs2_St1
 
 before_install: 
- - docker pull nek5000/nek5000-tester
+  - echo "HOME is $HOME"
+  - export ROOT_DIR=`pwd`
+  - sudo apt-get update -qq
+  - sudo apt-get install -y libmpich-dev mpich
+  - virtualenv -p python2.7 python2-env
+  - source $HOME/python2-env/bin/activate
+  - git clone https://github.com/RonRahaman/NekTests-deprecated.git -b unittests_plus_examples --recursive nek_tests
+ 
+install:
+  - pip install pytest
 
 script: 
- - if [[ "$TRAVIS_PULL_REQUEST" -eq "false" ]]; then docker run -v `pwd`:/home/nek/nek5000 nek5000/nek5000-tester -m "not pr" $TEST_SUITE; else docker run -v `pwd`:/home/nek/nek5000 nek5000/nek5000-tester $TEST_SUITE; fi
+  - py.test -s -v $HOME/nek_tests/NekUnitTests.py::$TEST_CASE
