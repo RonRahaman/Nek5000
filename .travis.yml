@@ -5,7 +5,7 @@ sudo: required
 env:
   matrix:
     - TEST_CASE=TurbChannel
-    - TEST_CASE=Fs2_St1
+    - TEST_CASE=Eddy_EddyUv
 
 before_install: 
   - export ROOT_DIR=`pwd`
