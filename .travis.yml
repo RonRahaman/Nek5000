@@ -6,6 +6,8 @@ env:
   matrix:
     - TEST_CASE=TurbChannel
     - TEST_CASE=Eddy_EddyUv
+    - TEST_CASE=ThreeDBox
+    - TEST_CASE=Blasius
 
 before_install: 
   - export ROOT_DIR=`pwd`
