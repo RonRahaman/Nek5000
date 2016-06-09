@@ -4,31 +4,30 @@ sudo: required
 
 env:
   global:
-    - SOURCE_ROOT=$HOME/nek5000
-    - TOOLS_ROOT=$HOME/nek5000/tools
-    - TOOLS_BIN=$HOME/nek5000/tools/bin
-    - SCRIPTS_ROOT=$HOME/nek5000/bin
-    - EXAMPLES_ROOT=$HOME/nek_tests/examples
-    - LOG_ROOT=$HOME/nek_tests/examples/TestLogs
+    - SOURCE_ROOT=$ROOT_DIR
+    - TOOLS_ROOT=$ROOT_DIR/tools
+    - TOOLS_BIN=$ROOT_DIR/tools/bin
+    - SCRIPTS_ROOT=$ROOT_DIR/bin
+    - EXAMPLES_ROOT=$ROOT_DIR/nek_tests/examples
+    - LOG_ROOT=$ROOT_DIR/nek_tests/examples/TestLogs
     - F77=mpif77
     - CC=mpicc
     - IFMPI=true
-    - PYTHONPATH="$HOME/nek_tests:$PYTHONPATH"
+    - PYTHONPATH="$ROOT_DIR/nek_tests:$PYTHONPATH"
   matrix:
     - TEST_CASE=NekUnitTests.py::TurbChannel
     - TEST_CASE=NekUnitTests.py::Fs2_St1
 
 before_install: 
   - export ROOT_DIR=`pwd`
-  - echo "HOME is $HOME; ROOT_DIR is $ROOT_DIR"
   - sudo apt-get update -qq
   - sudo apt-get install -y libmpich-dev mpich
-  - virtualenv -p python2.7 python2-env
-  - source python2-env/bin/activate
-  - git clone https://github.com/RonRahaman/NekTests-deprecated.git -b unittests_plus_examples --recursive nek_tests
+  - virtualenv -p python2.7 $ROOT_DIR/python2-env
+  - source $ROOT_DIR/python2-env/bin/activate
+  - git clone https://github.com/RonRahaman/NekTests-deprecated.git -b unittests_plus_examples --recursive $ROOT_DIR/nek_tests
  
 install:
   - pip install pytest
 
 script: 
-  - py.test -s -v $HOME/nek_tests/NekUnitTests.py::$TEST_CASE
+  - py.test -s -v $ROOT_DIR/nek_tests/NekUnitTests.py::$TEST_CASE
