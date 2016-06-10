@@ -43,6 +43,7 @@ ENV LOG_ROOT /home/nek/nek_tests/examples/TestLogs
 ENV F77 mpif77
 ENV CC mpicc
 ENV IFMPI true
+ENV VERBOSE_TESTS true
 ENV PYTHONPATH "/home/nek/nek_tests/:${PYTHONPATH}"
 
 # Run some tests

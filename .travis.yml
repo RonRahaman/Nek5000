@@ -6,11 +6,13 @@ services:
   - docker
 
 env:
- - TEST_SUITE=NekUnitTests.py::TurbChannel
- - TEST_SUITE=NekUnitTests.py::Fs2_St1
+  - TEST_CASE=TurbChannel    # 10 steps
+  - TEST_CASE=Rayleigh_Ray1  # 200 steps
+  - TEST_CASE=ExtCyl         # 1000 steps
+  - TEST_CASE=Eddy_EddyUv
 
 before_install: 
- - docker pull nek5000/nek5000-tester
+  - docker pull nek5000/nek5000-tester
 
 script: 
- - if [[ "$TRAVIS_PULL_REQUEST" -eq "false" ]]; then travis_wait docker run -v `pwd`:/home/nek/nek5000 nek5000/nek5000-tester $TEST_SUITE; else travis_wait docker run -v `pwd`:/home/nek/nek5000 nek5000/nek5000-tester $TEST_SUITE; fi
+  - docker run -v `pwd`:/home/nek/nek5000 nek5000/nek5000-tester NekUnitTests.py::$TEST_CASE
