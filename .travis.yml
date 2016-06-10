@@ -4,10 +4,10 @@ sudo: required
 
 env:
   matrix:
-    - TEST_CASE=TurbChannel TEST_SUBDIR=turbChannel
-    - TEST_CASE=Eddy_EddyUv TEST_SUBDIR=eddy
-    - TEST_CASE=ThreeDBox TEST_SUBDIR=3dbox
-    #- TEST_CASE=Blasius TEST_SUBDIR=blasius
+    - TEST_CASE=TurbChannel   #10 steps
+    - TEST_CASE=Rayleigh_Ray1 #200 steps
+    - TEST_CASE=ExtCyl        #1000 steps
+    - TEST_CASE=Eddy_EddyUv
 
 before_install: 
   - export ROOT_DIR=`pwd`
@@ -15,7 +15,7 @@ before_install:
   - export SOURCE_ROOT=$ROOT_DIR
   - export TOOLS_ROOT=$ROOT_DIR/tools
   - export TOOLS_BIN=$ROOT_DIR/tools/bin
-  - export SCRIPTS_ROOT=$ROOT_DIR/bin
+  - export SCRIPTS_ROOT=$ROOT_DIR/bin/verbose
   - export EXAMPLES_ROOT=$ROOT_DIR/nek_tests/examples
   - export LOG_ROOT=$ROOT_DIR/nek_tests/examples/TestLogs
   - export F77=mpif77
@@ -37,7 +37,3 @@ install:
 
 script: 
   - py.test -s -v $ROOT_DIR/nek_tests/NekUnitTests.py::$TEST_CASE
-
-after_failure:
-  - cat $EXAMPLES_ROOT/$TEST_SUBDIR/*.log.*
-  - cat $LOG_ROOT/$TEST_SUBDIR/*.log.*
