@@ -4,10 +4,26 @@ sudo: required
 
 env:
   matrix:
-    - TEST_CASE=TurbChannel   #10 steps
-    - TEST_CASE=Rayleigh_Ray1 #200 steps
-    - TEST_CASE=ExtCyl        #1000 steps
-    - TEST_CASE=Eddy_EddyUv
+    # 10 steps
+    - TEST_CASE=TurbChannel.test_PnPn_Serial
+    - TEST_CASE=TurbChannel.test_PnPn_Parallel
+    - TEST_CASE=TurbChannel.test_PnPn2_Serial
+    - TEST_CASE=TurbChannel.test_PnPn2_Parallel
+    # 200 steps
+    - TEST_CASE=Strat_P1000.test_PnPn_Serial
+    - TEST_CASE=Strat_P1000.test_PnPn_Parallel
+    - TEST_CASE=Strat_P1000.test_PnPn2_Serial
+    - TEST_CASE=Strat_P1000.test_PnPn2_Parallel
+    # 1000 steps
+    - TEST_CASE=ExtCyl.test_PnPn_Serial
+    - TEST_CASE=ExtCyl.test_PnPn_Parallel
+    - TEST_CASE=ExtCyl.test_PnPn2_Serial
+    - TEST_CASE=ExtCyl.test_PnPn2_Parallel
+    # Unlimited steps
+    - TEST_CASE=Eddy_EddyUv.test_PnPn_Serial
+    - TEST_CASE=Eddy_EddyUv.test_PnPn_Parallel
+    - TEST_CASE=Eddy_EddyUv.test_PnPn2_Serial
+    - TEST_CASE=Eddy_EddyUv.test_PnPn2_Parallel
 
 before_install: 
   - export ROOT_DIR=`pwd`
@@ -21,6 +37,7 @@ before_install:
   - export F77=mpif77
   - export CC=mpicc
   - export IFMPI=true
+  - export VERBOSE_TESTS=true
 
   - sudo apt-get update -qq
   - sudo apt-get install -y libmpich-dev mpich
