@@ -5,25 +5,25 @@ sudo: required
 env:
   matrix:
     # 10 steps
-    - TEST_CASE=TurbChannel.test_PnPn_Serial
-    - TEST_CASE=TurbChannel.test_PnPn_Parallel
-    - TEST_CASE=TurbChannel.test_PnPn2_Serial
-    - TEST_CASE=TurbChannel.test_PnPn2_Parallel
+    - TEST_CASE=TurbChannel::test_PnPn_Serial
+    - TEST_CASE=TurbChannel::test_PnPn_Parallel
+    - TEST_CASE=TurbChannel::test_PnPn2_Serial
+    - TEST_CASE=TurbChannel::test_PnPn2_Parallel
     # 200 steps
-    - TEST_CASE=Strat_P1000.test_PnPn_Serial
-    - TEST_CASE=Strat_P1000.test_PnPn_Parallel
-    - TEST_CASE=Strat_P1000.test_PnPn2_Serial
-    - TEST_CASE=Strat_P1000.test_PnPn2_Parallel
+    - TEST_CASE=Strat_P1000::test_PnPn_Serial
+    - TEST_CASE=Strat_P1000::test_PnPn_Parallel
+    - TEST_CASE=Strat_P1000::test_PnPn2_Serial
+    - TEST_CASE=Strat_P1000::test_PnPn2_Parallel
     # 1000 steps
-    - TEST_CASE=ExtCyl.test_PnPn_Serial
-    - TEST_CASE=ExtCyl.test_PnPn_Parallel
-    - TEST_CASE=ExtCyl.test_PnPn2_Serial
-    - TEST_CASE=ExtCyl.test_PnPn2_Parallel
+    - TEST_CASE=ExtCyl::test_PnPn_Serial
+    - TEST_CASE=ExtCyl::test_PnPn_Parallel
+    - TEST_CASE=ExtCyl::test_PnPn2_Serial
+    - TEST_CASE=ExtCyl::test_PnPn2_Parallel
     # Unlimited steps
-    - TEST_CASE=Eddy_EddyUv.test_PnPn_Serial
-    - TEST_CASE=Eddy_EddyUv.test_PnPn_Parallel
-    - TEST_CASE=Eddy_EddyUv.test_PnPn2_Serial
-    - TEST_CASE=Eddy_EddyUv.test_PnPn2_Parallel
+    - TEST_CASE=Eddy_EddyUv::test_PnPn_Serial
+    - TEST_CASE=Eddy_EddyUv::test_PnPn_Parallel
+    - TEST_CASE=Eddy_EddyUv::test_PnPn2_Serial
+    - TEST_CASE=Eddy_EddyUv::test_PnPn2_Parallel
 
 before_install: 
   - export ROOT_DIR=`pwd`
