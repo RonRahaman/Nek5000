@@ -14,6 +14,7 @@ $(SHARP_BUILD_DIR)/modules/coupe/lib/libcoupe_NEK.la:
 OBJECT_FLAGS = -I${SHARP_BUILD_DIR} ${SHARP_INCLUDES} -I${SHARP_COUPE_DIR}/include
 CPPFLAGS += $(OBJECT_FLAGS)
 LDFLAGS = ${SHARP_LDFLAGS}
+DEFAULT_DRIVER_SRCS = ../../../../tests/drivers/driverimpl.cxx
 
 LDADD += $(SHARP_BUILD_DIR)/modules/coupe/lib/libcoupe.la $(SHARP_LIBS) $(FLIBS)
 $(SHARP_BUILD_DIR)/modules/coupe/lib/libcoupe.la:
