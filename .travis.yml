@@ -4,26 +4,34 @@ sudo: required
 
 env:
   matrix:
+
     - TEST_CASE=Axi::test_PnPn_Serial
     - TEST_CASE=Axi::test_PnPn_Parallel
     - TEST_CASE=Axi::test_PnPn2_Serial
     - TEST_CASE=Axi::test_PnPn2_Parallel
+
+    # Parallel Eddy_EddyUv tests exceed Travis' max time limit
     - TEST_CASE=Eddy_EddyUv::test_PnPn_Serial
-    - TEST_CASE=Eddy_EddyUv::test_PnPn_Parallel
+    # - TEST_CASE=Eddy_EddyUv::test_PnPn_Parallel
     - TEST_CASE=Eddy_EddyUv::test_PnPn2_Serial
-    - TEST_CASE=Eddy_EddyUv::test_PnPn2_Parallel
-    - TEST_CASE=KovStState::test_PnPn_Serial
-    - TEST_CASE=KovStState::test_PnPn_Parallel
+    # - TEST_CASE=Eddy_EddyUv::test_PnPn2_Parallel
+
+    # PN-PN tests aren't defined for KovStState
+    # - TEST_CASE=KovStState::test_PnPn_Serial
+    # - TEST_CASE=KovStState::test_PnPn_Parallel
     - TEST_CASE=KovStState::test_PnPn2_Serial
     - TEST_CASE=KovStState::test_PnPn2_Parallel
+
     - TEST_CASE=LowMachTest::test_PnPn_Serial
     - TEST_CASE=LowMachTest::test_PnPn_Parallel
     - TEST_CASE=LowMachTest::test_PnPn2_Serial
     - TEST_CASE=LowMachTest::test_PnPn2_Parallel
-    - TEST_CASE=VarVis::test_PnPn_Serial
-    - TEST_CASE=VarVis::test_PnPn_Parallel
-    - TEST_CASE=VarVis::test_PnPn2_Serial
-    - TEST_CASE=VarVis::test_PnPn2_Parallel
+
+    # Stdout exceeds Travis' maximum log length
+    # - TEST_CASE=VarVis::test_PnPn_Serial
+    # - TEST_CASE=VarVis::test_PnPn_Parallel
+    # - TEST_CASE=VarVis::test_PnPn2_Serial
+    # - TEST_CASE=VarVis::test_PnPn2_Parallel
 
 before_install: 
   - export ROOT_DIR=`pwd`
