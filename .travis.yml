@@ -10,6 +10,16 @@ env:
     - TEST_CASE=Axi::test_PnPn2_Serial
     - TEST_CASE=Axi::test_PnPn2_Parallel
 
+    # Benard isn't tested in parallel
+    - TEST_CASE=Benard_Ray9::test_PnPn_Serial
+    - TEST_CASE=Benard_Ray9::test_PnPn2_Serial
+    - TEST_CASE=Benard_RayDD::test_PnPn_Serial
+    - TEST_CASE=Benard_RayDD::test_PnPn2_Serial
+    - TEST_CASE=Benard_RayDN::test_PnPn_Serial
+    - TEST_CASE=Benard_RayDN::test_PnPn2_Serial
+    - TEST_CASE=Benard_RayNN::test_PnPn_Serial
+    - TEST_CASE=Benard_RayNN::test_PnPn2_Serial
+
     # Parallel Eddy_EddyUv tests exceed Travis' max time limit
     - TEST_CASE=Eddy_EddyUv::test_PnPn_Serial
     # - TEST_CASE=Eddy_EddyUv::test_PnPn_Parallel
@@ -17,8 +27,6 @@ env:
     # - TEST_CASE=Eddy_EddyUv::test_PnPn2_Parallel
 
     # PN-PN tests aren't defined for KovStState
-    # - TEST_CASE=KovStState::test_PnPn_Serial
-    # - TEST_CASE=KovStState::test_PnPn_Parallel
     - TEST_CASE=KovStState::test_PnPn2_Serial
     - TEST_CASE=KovStState::test_PnPn2_Parallel
 
