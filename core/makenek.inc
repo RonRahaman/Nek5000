@@ -251,7 +251,6 @@ if [ "$IFCMT" == "true" -o "$IFCMT" == "yes" ]; then
 else
   # default
   IFCMT=false
-  PPLIST="${PPLIST} MPI"
 fi
 export IFCMT
 
