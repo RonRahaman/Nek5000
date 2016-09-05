@@ -869,7 +869,7 @@ C
 
       include 'OPCTR'
 C
-#ifndef NOTIMER
+#ifdef TIMER
       if (isclld.eq.0) then
           isclld=1
           nrout=nrout+1
@@ -883,7 +883,7 @@ C
 C
       NTOT=NX1*NY1*NZ1*NELV
 C
-#ifndef NOTIMER
+#ifdef TIMER
       isbcnt = ntot*(1+ndim)
       dct(myrout) = dct(myrout) + (isbcnt)
       ncall(myrout) = ncall(myrout) + 1
@@ -931,7 +931,7 @@ C
 
       include 'OPCTR'
 C
-#ifndef NOTIMER
+#ifdef TIMER
       if (isclld.eq.0) then
           isclld=1
           nrout=nrout+1
@@ -945,7 +945,7 @@ C
 C
       NTOT=NX1*NY1*NZ1*NELV
 C
-#ifndef NOTIMER
+#ifdef TIMER
       isbcnt = ntot*(1+ndim)
       dct(myrout) = dct(myrout) + (isbcnt)
       ncall(myrout) = ncall(myrout) + 1
@@ -3813,7 +3813,7 @@ c
       include 'OPCTR'
 
 c     Operation count
-#ifndef NOTIMER
+#ifdef TIMER
       integer opct
       if (isclld.eq.0) then
           isclld=1
@@ -3861,7 +3861,7 @@ c
          enddo
       endif
 c
-#ifndef NOTIMER
+#ifdef TIMER
       if (ndim.eq.3) then
          opct = ntot*21
       else
@@ -3893,7 +3893,7 @@ c
 c
 c     Operation count
 c
-#ifndef NOTIMER
+#ifdef TIMER
       integer opct
       if (isclld.eq.0) then
           isclld=1
@@ -3941,7 +3941,7 @@ c
          enddo
       endif
 c
-#ifndef NOTIMER
+#ifdef TIMER
       opct = ndim*ntot
       dct(myrout) = dct(myrout) + opct
       dcount      =      dcount + opct
@@ -3972,7 +3972,7 @@ C
 c
 c     Operation count
 c
-#ifndef NOTIMER
+#ifdef TIMER
       integer opct
       if (isclld.eq.0) then
           isclld=1
@@ -4058,7 +4058,7 @@ c
 c
       enddo
 c
-#ifndef NOTIMER
+#ifdef TIMER
       if (if3d) then
          opct = 21*ntot
       else
@@ -4092,7 +4092,7 @@ c
 c
 c     Operation count
 c
-#ifndef NOTIMER
+#ifdef TIMER
       integer opct
       if (isclld.eq.0) then
           isclld=1
@@ -4141,7 +4141,7 @@ c
          enddo
       endif
 c
-#ifndef NOTIMER
+#ifdef TIMER
       opct = ndim*ntot
       dct(myrout) = dct(myrout) + opct
       dcount      =      dcount + opct
