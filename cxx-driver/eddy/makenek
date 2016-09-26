@@ -9,10 +9,10 @@ SOURCE_ROOT_JL="$SOURCE_ROOT/jl"
 SOURCE_ROOT_CMT="$SOURCE_ROOT/core/cmt"
 
 # Fortran compiler
-F77="mpif77"
+F77="gfortran"
 
 # C compiler
-CC="mpicc"
+CC="gcc"
 
 # pre-processor symbol list 
 # (set PPLIST=? to get a list of available symbols)
@@ -23,7 +23,7 @@ CC="mpicc"
 # -----------------
 
 # enable MPI (default true)
-#IFMPI="false"
+IFMPI="false"
 
 # enable CMT (default false)
 #IFCMT="true"
