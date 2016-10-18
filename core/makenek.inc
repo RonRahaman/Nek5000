@@ -235,6 +235,13 @@ case $F77comp in
 esac
 export PPPO
 
+# assign OS-specific flags
+case $(uname) in
+  Darwin) P="-Wa,-q -Wl,-no_compact_unwind $P"
+          PC="-Wl,-no_compact_unwind $PC"
+          ;;
+esac
+
 # set preprocessor symbols
 if [ "$IFMPI" == "false" -o "$IFMPI" == "no" ]; then
   IFMPI=false
@@ -389,14 +396,15 @@ if [ "$USR_LIB" != "" ]; then
 fi
 
 # tweak makefile template 
-echo "generating makefile ..."
-rm -rf makefile 2>/dev/null
+echo "generating makefile.nek ..."
+rm -rf makefile.nek 2>/dev/null
 
 sed -e "s:^F77[ ]*=.*:F77\:=$F77:" \
 -e "s:^CC[ ]*=.*:CC\:=$CC:" \
 -e "s:^G[ ]*=.*:G\:=$G:" \
 -e "s:^OPT_FLAGS[ ]*=.*:OPT_FLAGS\:=$OPT_FLAGS:" \
 -e "s/^P[ ]*=.*/P:=$P/" \
+-e "s/^PC[ ]*=.*/PC:=$PC/" \
 -e "s/^L0[ ]*=.*/L0=$L0/" \
 -e "s/^L2[ ]*=.*/L2=$L2/" \
 -e "s/^L3[ ]*=.*/L3=$L3/" \
@@ -454,15 +462,15 @@ if [ "$IFVISIT" == "true" -o "$IFVISIT" == "yes" ]; then
 fi
 
 if [ "$USR" != "" ]; then
-  echo "###########################################################" >> makefile
+  echo "###########################################################" >> makefile.nek
   echo "include makefile_usr.inc" >> .makefile
 fi
 
 if [ -f .makefile ]; then
   sed -e "1i\\
 ### makefile automatically created by makenek `date +"%m/%d/%Y %T"` ###" \
--e "s:^CASEDIR[ ]*=.*:CASEDIR\:=${CASEDIR}:" \
--e "s:^CASENAME[ ]*=.*:CASENAME\:=${CASENAME}:" .makefile > makefile 
+-e "s:^CASEDIR[ ]*=.*:CASEDIR\=${CASEDIR}:" \
+-e "s:^CASENAME[ ]*=.*:CASENAME\=${CASENAME}:" .makefile > makefile.nek 
 else
   echo "ERROR: Nek Makefile could not be created!"
   exit 1 
