@@ -414,8 +414,8 @@ if [ "$USR_LIB" != "" ]; then
 fi
 
 # tweak makefile template 
-echo "generating makefile ..."
-rm -rf makefile 2>/dev/null
+echo "generating makefile.nek ..."
+rm -rf makefile.nek 2>/dev/null
 
 sed -e "s:^F77[ ]*=.*:F77\:=$F77:" \
 -e "s:^CC[ ]*=.*:CC\:=$CC:" \
@@ -479,7 +479,7 @@ if [ "$IFVISIT" == "true" -o "$IFVISIT" == "yes" ]; then
 fi
 
 if [ "$USR" != "" ]; then
-  echo "###########################################################" >> makefile
+  echo "###########################################################" >> makefile.nek
   echo "include makefile_usr.inc" >> .makefile
 fi
 
@@ -487,7 +487,7 @@ if [ -f .makefile ]; then
   sed -e "1i\\
 ### makefile automatically created by makenek `date +"%m/%d/%Y %T"` ###" \
 -e "s:^CASEDIR[ ]*=.*:CASEDIR\:=${CASEDIR}:" \
--e "s:^CASENAME[ ]*=.*:CASENAME\:=${CASENAME}:" .makefile > makefile 
+-e "s:^CASENAME[ ]*=.*:CASENAME\:=${CASENAME}:" .makefile > makefile.nek 
 else
   echo "ERROR: Nek Makefile could not be created!"
   exit 1 
