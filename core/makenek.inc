@@ -237,6 +237,13 @@ case $F77comp in
 esac
 export PPPO
 
+# assign OS-specific flags
+case $(uname) in
+  Darwin) P="-Wa,-q -Wl,-no_compact_unwind $P"
+          PC="-Wl,-no_compact_unwind $PC"
+          ;;
+esac
+
 # set preprocessor symbols
 if [ "$IFMPI" == "false" -o "$IFMPI" == "no" ]; then
   IFMPI=false
@@ -422,6 +429,7 @@ sed -e "s:^F77[ ]*=.*:F77\:=$F77:" \
 -e "s:^G[ ]*=.*:G\:=$G:" \
 -e "s:^OPT_FLAGS[ ]*=.*:OPT_FLAGS\:=$OPT_FLAGS:" \
 -e "s/^P[ ]*=.*/P:=$P/" \
+-e "s/^PC[ ]*=.*/PC:=$PC/" \
 -e "s/^L0[ ]*=.*/L0=$L0/" \
 -e "s/^L2[ ]*=.*/L2=$L2/" \
 -e "s/^L3[ ]*=.*/L3=$L3/" \
