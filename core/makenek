@@ -38,7 +38,7 @@ CC="mpicc"
 
 
 # generic compiler flags
-#G="-g"
+G="-fPIC"
 
 # optimization flags
 #OPT_FLAGS_STD=""
