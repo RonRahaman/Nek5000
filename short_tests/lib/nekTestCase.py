@@ -130,11 +130,11 @@ class NekTestCase(unittest.TestCase):
         unittest.TestCase.__init__(self, *args, **kwargs)
 
 
-    def assertAlmostEqualDelayed(self, test_val, target_val, delta, label):
-        if abs(test_val-target_val) <= delta:
-            msg = '    SUCCESS: {0}: Test value {1} equals target value {2} +/- {3}'.format(label, test_val, target_val, delta)
+    def assertAbsTolDelayed(self, test_val, target_val, tol, label):
+        if abs(test_val-target_val) <= tol:
+            msg = '    SUCCESS: {0}: Test value {1} equals target value {2} +/- {3}'.format(label, test_val, target_val, tol)
         else:
-            msg = '    FAILURE: {0}: Test value {1} exceeds target value {2} +/- {3}'.format(label, test_val, target_val, delta)
+            msg = '    FAILURE: {0}: Test value {1} exceeds target value {2} +/- {3}'.format(label, test_val, target_val, tol)
             self._delayed_failures.append(msg)
         print(msg)
 
