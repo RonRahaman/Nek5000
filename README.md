@@ -1,3 +1,25 @@
+# About this branch: rebase-for-bisect
+
+This branch provides a starting point for a git-bisect workflow.  
+
+The oldest working commit is:
+```
+d6351dd95d0e0a10766210c3b7d8d151eabfac33
+```
+which corresponds to SVN r1069. This *should* succeed for all tests in
+[NekExamples](https://github.com/Nek5000/NekExamples).  At this commit, the
+build system (makenek, etc.) has been patched so it will work with
+NekExamples/NekTests.py. 
+
+Following that commit, the "release/v16.0.0" branch has been rebased on top.  
+
+So, to start a git-bisect, you can do something like:
+```
+git bisect start HEAD d6351dd95d0e0a10766210c3b7d8d151eabfac33
+```
+meaning that HEAD is broken and `d635...` is working.  
+
+
 # Nek5000 
 ![https://travis-ci.org/Nek5000/Nek5000](https://travis-ci.org/Nek5000/Nek5000.svg?branch=develop)
 [![GPLv3 licensed](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://raw.githubusercontent.com/Nek5000/nek5000/develop/LICENSE)
