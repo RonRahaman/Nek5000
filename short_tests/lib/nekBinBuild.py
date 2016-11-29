@@ -3,8 +3,29 @@ import sys
 from subprocess import call, check_call, Popen, PIPE, STDOUT
 from lib.nekFileConfig import config_makenek, config_maketools, config_basics_inc
 
-def build_tools(tools_root, tools_bin, f77=None, cc=None, bigmem=None,
+def build_tools(tools_root, tools_bin, f77='gfortran', cc='gcc', bigmem='false',
                 targets=('clean', 'all'), verbose=False):
+    """ Compile the Nek5000 tools in a given source directory
+
+    Given a path to the top-level tools source directory ('tools_root'), compile the makefile targets specified by a
+    list/tuple in 'targets', and output the executables in 'tools_bin'.  Targets are compiled in the order listed (
+    so, for example, you can run 'make clean' by listing 'clean' first).  The values 'f77', 'cc', and 'bigmem' are
+    used for F77, CC, and BIGMEM, respectively.
+
+    For example, this command will compile genmap and genbox using the PGI compilers:
+        build_tools('/home/rahaman/Nek5000/tools', '/home/rahaman/Nek5000/bin',
+                    f77='pgf77', cc='pgcc', targets=('clean', 'genbox', 'genmap'))
+
+    Args:
+        tools_root (str): Path to top-level tools/ source directory
+        tools_bin (str): Path to desired bin/ directory for resultant executables
+        f77 (str): Fortran 77 compiler to use
+        cc (str): C compiler to use
+        bigmem (str): Option for BIGMEM variable in maketools (typically, the string 'true' or 'false')
+        targets (list|tuple): A list of makefile targets to build.  Targets will be built in the order listed.
+        verbose (bool): Specify True for verbose compilation
+
+    """
 
     print('Compiling tools... ')
     print('    Using source directory "{0}"'.format(tools_root))
@@ -58,6 +79,27 @@ def build_tools(tools_root, tools_bin, f77=None, cc=None, bigmem=None,
         print('Successfully compiled tools!')
 
 def build_nek(source_root, usr_file, cwd=None, opts=None, verbose=False):
+    """ Compile Nek5000 with the given options
+
+    Given a path to the top-level source directory ('tools_root'), compile the makefile targets specified by a
+    list/tuple in 'targets', and output the executables in 'tools_bin'.  Targets are compiled in the order listed (
+    so, for example, you can run 'make clean' by listing 'clean' first).  The values 'f77', 'cc', and 'bigmem' are
+    used for F77, CC, and BIGMEM, respectively.
+
+    For example, this command will compile genmap and genbox using the PGI compilers:
+        build_tools('/home/rahaman/Nek5000/tools', '/home/rahaman/Nek5000/bin',
+                    f77='pgf77', cc='pgcc', targets=('clean', 'genbox', 'genmap'))
+
+    Args:
+        tools_root (str): Path to top-level tools/ source directory
+        tools_bin (str): Path to desired bin/ directory for resultant executables
+        f77 (str): Fortran 77 compiler to use
+        cc (str): C compiler to use
+        bigmem (str): Option for BIGMEM variable in maketools (typically, the string 'true' or 'false')
+        targets (list|tuple): A list of makefile targets to build.  Targets will be built in the order listed.
+        verbose (bool): Specify True for verbose compilation
+
+    """
 
     if not opts:
         _opts = {}
