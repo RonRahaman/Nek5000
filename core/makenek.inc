@@ -494,8 +494,8 @@ fi
 if [ -f .makefile ]; then
   sed -e "1i\\
 ### makefile automatically created by makenek `date +"%m/%d/%Y %T"` ###" \
--e "s:^CASEDIR[ ]*=.*:CASEDIR\:=${CASEDIR}:" \
--e "s:^CASENAME[ ]*=.*:CASENAME\:=${CASENAME}:" .makefile > makefile.nek 
+-e "s:^CASEDIR[ ]*=.*:CASEDIR\=${CASEDIR}:" \
+-e "s:^CASENAME[ ]*=.*:CASENAME\=${CASENAME}:" .makefile > makefile.nek 
 else
   echo "ERROR: Nek Makefile could not be created!"
   exit 1 

@@ -150,8 +150,7 @@ all : nek5000
 objdir: 
 	@mkdir $(OBJDIR) 2>/dev/null; cat /dev/null 
 
-nek5000:	objdir $(NOBJS)
-	$(F77) -c $(FL2) $(CASEDIR)/${CASENAME}.f $(MOABNEK_INCLUDES) $(VISITNEK_INCLUDES) $(IMESH_INCLUDES) -o ${OBJDIR}/${CASENAME}.o 
+nek5000:	objdir $(CASEDIR)/${CASENAME}.o $(NOBJS) 
 	$(F77) -o ${BINNAME} $G ${OBJDIR}/${CASENAME}.o $(NOBJS) $(lFLAGS)
 	@if test -f ${BINNAME}; then \
 	echo "#############################################################"; \
@@ -167,6 +166,9 @@ nek5000:	objdir $(NOBJS)
 ifeq ($(IFMPI),false) 
 	@rm -rf $S/mpif.h
 endif
+
+${OBJDIR}/${CASENAME}.o:	objdir $(CASEDIR)/${CASENAME}.f 
+	$(F77) -c $(FL2) $(CASEDIR)/${CASENAME}.f $(MOABNEK_INCLUDES) $(VISITNEK_INCLUDES) $(IMESH_INCLUDES) -o ${OBJDIR}/${CASENAME}.o 
 
 lib: objdir $(NOBJS)
 	$(F77) -shared -o ${LIBNAME}.so $(NOBJS)
