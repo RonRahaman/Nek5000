@@ -4,7 +4,7 @@
 set -o pipefail
 
 # source path 
-SOURCE_ROOT=$(dirname $(dirname $(pwd)))/Nek5000
+SOURCE_ROOT="$(dirname $(dirname $(pwd)))/Nek5000"
 SOURCE_ROOT_CORE="$SOURCE_ROOT/core"
 SOURCE_ROOT_JL="$SOURCE_ROOT/jl"
 SOURCE_ROOT_CMT="$SOURCE_ROOT/core/cmt"
@@ -39,7 +39,7 @@ CC="mpicc"
 
 
 # generic compiler flags
-G="-fPIC"
+# G="-g"
 
 # optimization flags
 #OPT_FLAGS_STD=""

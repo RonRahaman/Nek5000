@@ -395,6 +395,13 @@ if [ "$USR_LIB" != "" ]; then
     USR_LFLAGS="${USR_LFLAGS} ${USR_LIB}"
 fi
 
+# Compile with PIC for shared library support
+L0="-fPIC $L0"
+L2="-fPIC $L2"
+L3="-fPIC $L3"
+L4="-fPIC $L4"
+
+
 # tweak makefile template 
 echo "generating makefile.nek ..."
 rm -rf makefile.nek 2>/dev/null

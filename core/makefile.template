@@ -157,7 +157,7 @@ objdir:
 
 nek5000:	objdir libnek5000.so
 	$(F77) -c $(FL2) $(CASEDIR)/${CASENAME}.f $(MOABNEK_INCLUDES) $(VISITNEK_INCLUDES) $(IMESH_INCLUDES) -o ${OBJDIR}/${CASENAME}.o 
-	$(F77) -o nek5000 $G ${OBJDIR}/${CASENAME}.o libnek5000.so $(lFLAGS) -lnek5000 -Wl,-rpath=./
+	$(F77) -o nek5000 $G ${OBJDIR}/${CASENAME}.o $(lFLAGS) -lnek5000 -L./ -Wl,-rpath=./
 	@if test -f nek5000; then \
 	echo "#############################################################"; \
 	echo "#                  Compilation successful!                  #"; \
