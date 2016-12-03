@@ -89,5 +89,5 @@ fi
 # do some checks and create makefile
 source $SOURCE_ROOT_CORE/makenek.inc
 # compile
-# make -j4 -f makefile.nek nek5000 lib 2>&1 | tee compiler.out
+make -j4 -f makefile.nek nek5000 2>&1 | tee compiler.out
 exit $?
