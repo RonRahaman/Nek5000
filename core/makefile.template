@@ -1,5 +1,6 @@
+# This makefile.template builds libnek5000.so. 
+# MOON needs to link libnek5000 as a shared library.
 BINNAME=nek5000
-LIBNAME=libnek5000
 CASENAME=
 CASEDIR=
 S=
@@ -150,13 +151,14 @@ all : nek5000
 objdir: 
 	@mkdir $(OBJDIR) 2>/dev/null; cat /dev/null 
 
-nek5000:	objdir $(CASEDIR)/${CASENAME}.o $(NOBJS) 
-	$(F77) -o ${BINNAME} $G ${OBJDIR}/${CASENAME}.o $(NOBJS) $(lFLAGS)
-	@if test -f ${BINNAME}; then \
+nek5000:	objdir libnek5000.so
+	$(F77) -c $(FL2) $(CASEDIR)/${CASENAME}.f $(MOABNEK_INCLUDES) $(VISITNEK_INCLUDES) $(IMESH_INCLUDES) -o ${OBJDIR}/${CASENAME}.o 
+	$(F77) -o nek5000 $G ${OBJDIR}/${CASENAME}.o libnek5000.so $(lFLAGS) -lnek5000 -Wl,-rpath=./
+	@if test -f nek5000; then \
 	echo "#############################################################"; \
 	echo "#                  Compilation successful!                  #"; \
 	echo "#############################################################"; \
-        size ${BINNAME}; \
+        size nek5000; \
         echo ""; \
         echo "$(NEK_WARN)"; \
 	else \
@@ -167,14 +169,11 @@ ifeq ($(IFMPI),false)
 	@rm -rf $S/mpif.h
 endif
 
-${OBJDIR}/${CASENAME}.o:	objdir $(CASEDIR)/${CASENAME}.f 
-	$(F77) -c $(FL2) $(CASEDIR)/${CASENAME}.f $(MOABNEK_INCLUDES) $(VISITNEK_INCLUDES) $(IMESH_INCLUDES) -o ${OBJDIR}/${CASENAME}.o 
-
-lib: objdir $(NOBJS)
-	$(F77) -shared -o ${LIBNAME}.so $(NOBJS)
+libnek5000.so: objdir $(NOBJS)
+	$(F77) -shared -o $@ $(NOBJS)
 
 clean:
-	rm -rf ./obj ${BINNAME}
+	rm -rf ./obj nek5000 libnek5000.so
 ifeq ($(IFMPI),false) 
 	@rm -rf $S/mpif.h
 endif
