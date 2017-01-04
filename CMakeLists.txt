@@ -106,7 +106,7 @@ endif ()
 
 # === Compiler-specific Flags =================================================
 if (CMAKE_Fortran_COMPILER_ID STREQUAL GNU) 
-  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fdefault-real-8 -fdefault-double-8 -x f77-cpp-input")
+  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fdefault-real-8 -fdefault-double-8 -cpp")
 elseif (CMAKE_Fortran_COMPILER_ID STREQUAL Intel)
   set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpconstant -fpp")
 elseif (CMAKE_Fortran_COMPILER_ID STREQUAL PGI)
