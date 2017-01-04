@@ -22,16 +22,23 @@ endif ()
 
 if (BGQ AND NOT VENDOR_BLAS)
   message ("-- Using vendor's BLAS/LAPACK library for IBM BG/Q")
-  set (VENDOR_BLAS ON CACHE BOOL "link against external BLAS/LAPACK" FORCE)
+endif ()
+
+if (IFAMG_DUMP AND NOT IFAMG)
+  message ("-- Ignoring IFAMG_DUMP=ON since IFAMG=OFF")
 endif ()
 
 # === Preprocessor Symbols =====================================================
+
+add_definitions(-DGLOBAL_LONG_LONG -DPREFIX=jl_)
+
 if (IFMPI)
-  # TODO: handle mpidummy.h
   add_definitions (-DMPI)
 endif ()
 
-# TODO: Handle AMG objects in Makefile
+if (IFAMG AND IFAMG_DUMP)
+  add_definitions (-DAMG_DUMP)
+endif ()
 
 if (IFPROFILING)
   if (IFMPI)
@@ -47,7 +54,6 @@ endif ()
 
 if (BGQ)
   add_definitions(-DBGQ)
-  # TODO: Handle BGQ mxm objects in Makefile
 endif ()
 
 if (XSMM)
@@ -56,12 +62,10 @@ endif ()
 
 if (CVODE)
   add_definitions(-DCVODE)
-  # TODO: Handle CVODE objects in Makefile
 endif ()
 
 if (VENDOR_BLAS)
   add_definitions(-DVENDOR_BLAS)
-  # TODO: Handle BLAS objects in Makefile
 endif ()
 
 if (EXTBAR)
@@ -70,17 +74,12 @@ endif ()
 
 if (NEKNEK)
   add_definitions(-DNEKNEK)
-  # TODO: Handle NekNek objects in Makefile
 endif ()
 
 if (CMTNEK)
   add_definitions(-DCMTNEK)
-  # TODO: Handle CMT objects in Makefile
 endif ()
 
-add_definitions(-DGLOBAL_LONG_LONG)
-
-# === Type sizes ===============================================================
 # Check pointer size
 if (CMAKE_C_SIZEOF_DATA_PTR EQUAL 8)
   add_definitions (-DPTRSIZE8)
@@ -93,7 +92,7 @@ if (SIZEOF_LONG_INT EQUAL 8)
   add_definitions(-DLONGINT8)
 endif ()
 
-# === Fortran Name Mangling ====================================================
+# Fortran name mangling
 # After running the FortranCInterface checks, CMake defines a few useful variables:
 #   * FortranCInterface_GLOBAL_MACRO:  A preprocessor macro to mangle a Fortran global symbol
 #   * FortranCInterface_GLOBAL_PREFIX: Sting to prepend to a Fortran global symbol
@@ -125,4 +124,71 @@ endif ()
 # TODO: Tweak .usr file
 
 # === Makefile targets =========================================================
+
+# Core FORTRAN source
+set (NEK_CORE_F_SRC drive1.f drive2.f plan4.f bdry.f coef.f conduct.f connect1.f connect2.f dssum.f
+  edgec.f eigsolv.f gauss.f genxyz.f navier1.f makeq.f navier0.f navier2.f navier3.f navier4.f
+  prepost.f speclib.f map2.f turb.f mvmesh.f ic.f ssolv.f planx.f mxm_wrapper.f hmholtz.f
+  gfdm_par.f  gfdm_op.f gfdm_solve.f subs1.f subs2.f genbox.f gmres.f hsmg.f convect.f induct.f
+  perturb.f navier5.f navier6.f navier7.f navier8.f fast3d.f fasts.f calcz.f byte_mpi.f postpro.f
+  cvode_driver.f vprops.f qthermal.f cvode_aux.f makeq_aux.f papi.f nek_in_situ.f readat_new.f
+  ${CASENAME}.f)
+
+# Math source
+set (NEK_MATH_SRC "math.f")
+
+# BLAS/LAPACK source
+if (VENDOR_BLAS OR BGQ)
+  set (NEK_BLAS_SRC "")
+else ()
+  set (NEK_BLAS_SRC blas.f dsygv.f ssygv.f)
+endif ()
+
+# CMT source
+if (CMTNEK)
+  set (NEK_CMT_SRC drive1_cmt.f drive2_cmt.f driver3_cmt.f face.f ausm.f  MixtPerf.f intpdiff.f
+    diffusive_cmt.f eqnsolver_cmt.f surface_fluxes.f bc.f inflow_bc.f outflow_bc.f wall_bc.f step.f
+    filters_cmt.f diagnostics.f)
+else ()
+  set (NEK_CMT_SRC "")
+endif ()
+
+# MPI source
+# TODO: Handle creation/deletion of mpif.h
+if (MPI)
+  set (NEK_MPI_SRC byte_mpi.f comm_mpi.f)
+else ()
+  set (NEK_MPI_SRC byte_mpi.f comm_mpi.f mpi_dummy.f)
+endif ()
+
+# MXM source
+if (BGQ)
+  set (NEK_MXM_SRC mxm_std.f mxm_bgq.f)
+else ()
+  set (NEK_MXM_SRC mxm_std.f)
+endif ()
+
+# NEKNEK source
+if (NEKNEK)
+  set (NEK_NEKNEK_SRC multimesh.f)
+else ()
+  set (NEK_NEKNEK_SRC singlmesh.f)
+endif ()
+
+# Core C source
+set (NEK_CORE_C_SRC byte.f chelpers.f nek_comm.f finiparser.f iniparser.f dictionary.f)
+
+# JL core source
+set (JL_CORE_SRC gs.f sort.f sarray_transfer.f sarray_sort.f gs_local.f crystal.f comm.f tensor.f fail.f fcrystal.f)
+
+# JL interpolation source
+set (JL_INTERP_SRC findpts.f findpts_local.f obbox.f poly.f lob_bnd.f findpts_el_3.f findpts_el_2.f)
+
+# JL conjugate gradient solver source
+if (AMG)
+  set (JL_CGS_SRC amg.f fcrs.f)
+else ()
+  set (JL_CGS_SRC sparse_cholesky.f xxt.f fcrs.f)
+endif ()
+
 add_executable(nek5000 core/drive.f)
