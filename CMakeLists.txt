@@ -104,19 +104,6 @@ if (FortranCInterface_GLOBAL_SUFFIX STREQUAL "_")
   add_definitions (-DUNDERSCORE)
 endif ()
 
-# === Compiler-specific Flags =================================================
-if (CMAKE_Fortran_COMPILER_ID STREQUAL GNU) 
-  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fdefault-real-8 -fdefault-double-8 -cpp")
-elseif (CMAKE_Fortran_COMPILER_ID STREQUAL Intel)
-  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpconstant -fpp")
-elseif (CMAKE_Fortran_COMPILER_ID STREQUAL PGI)
-  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -Mpreprocess")
-elseif (CMAKE_Fortran_COMPILER_ID STREQUAL XL)
-  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qrealsize=8 -qdpc=e -qsuffix=cpp=f")
-elseif (CMAKE_Fortran_COMPILER_ID STREQUAL Cray)
-  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -s default64 -eF")
-endif ()
-
 # === Tweak SIZE file ==========================================================
 # TODO: Tweak SIZE file
 
@@ -192,3 +179,35 @@ else ()
 endif ()
 
 add_executable(nek5000 core/drive.f)
+
+# === Compiler Flags =================================================
+
+# Compiler-specific FFLAGs
+if (CMAKE_Fortran_COMPILER_ID STREQUAL GNU) 
+  set (COMP_SPEC_FFLAGS "-fdefault-real-8 -fdefault-double-8 -cpp")
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL Intel)
+  set (COMP_SPEC_FFLAGS "-r8 -fpconstant -fpp")
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL PGI)
+  set (COMP_SPEC_FFLAGS "-r8 -Mpreprocess")
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL XL)
+  set (COMP_SPEC_FFLAGS "-qrealsize=8 -qdpc=e -qsuffix=cpp=f")
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL Cray)
+  set (COMP_SPEC_FFLAGS "-s default64 -eF")
+endif ()
+
+# TODO: Create custom "optimized" and "BGQ" build mode.  See:
+# https://cmake.org/Wiki/CMake_FAQ#How_can_I_extend_the_build_modes_with_a_custom_made_one_.3F
+
+# Default (none) build mode
+set (CMAKE_C_FLAGS "-O2")
+set (CMAKE_Fortran_FLAGS "${COMP_SPEC_FFLAGS} -O2")
+set_source_files_properties ("${NEK_BLAS_SRC}" PROPERTIES CMAKE_Fortran_FLAGS "${COMP_SPEC_FFLAGS} -O0" )
+set_source_files_properties ("${NEK_MATH_SRC}" PROPERTIES CMAKE_Fortran_FLAGS "${COMP_SPEC_FFLAGS} -O3" )
+set_source_files_properties ("${NEK_MXM_SRC}"  PROPERTIES CMAKE_Fortran_FLAGS "${COMP_SPEC_FFLAGS} -O3" )
+
+# Debug build mode
+set (CMAKE_C_FLAGS_DEBUG "-g -O2")
+set (CMAKE_Fortran_FLAGS_DEBUG "${COMP_SPEC_FFLAGS} -g -O2")
+set_source_files_properties ("${NEK_BLAS_SRC}" PROPERTIES CMAKE_Fortran_FLAGS_DEBUG "${COMP_SPEC_FFLAGS} -g -O0" )
+set_source_files_properties ("${NEK_MATH_SRC}" PROPERTIES CMAKE_Fortran_FLAGS_DEBUG "${COMP_SPEC_FFLAGS} -O3" )
+set_source_files_properties ("${NEK_MXM_SRC}"  PROPERTIES CMAKE_Fortran_FLAGS_DEBUG "${COMP_SPEC_FFLAGS} -O3" )
