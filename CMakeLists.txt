@@ -327,7 +327,8 @@ set_source_files_properties ("${NEK_MXM_SRC}"  PROPERTIES CMAKE_Fortran_FLAGS_DE
 
 # === Targets and Dependencies  ==================================================================
 
-add_executable(nek5000 ${NEK_EXEC_SRC})
+set(NEK_LIB "nek5000_${CASENAME}")
+add_library("${NEK_LIB}" SHARED ${NEK_LIB_SRC})
 
 add_custom_target(
   RM_MPIF_H
@@ -342,9 +343,9 @@ add_custom_target(
 )
 
 if (IFMPI)
-  add_dependencies(nek5000 RM_MPIF_H)
+  add_dependencies("${NEK_LIB}" RM_MPIF_H)
 else ()
-  add_dependencies(nek5000 CP_MPI_DUMMY_H)
+  add_dependencies("${NEK_LIB}" CP_MPI_DUMMY_H)
 endif ()
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}" core/ jl/)
@@ -352,6 +353,9 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}" core/ jl/)
 if (CMTNEK)
   include_directories(core/cmt)
 endif ()
+
+add_executable(nek5000 core/drive.f)
+target_link_libraries(nek5000 "${NEK_LIB}")
 
 #if (IFMPI)
 #   add_custom_command(TARGET nek5000 PRE_BUILD 
