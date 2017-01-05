@@ -104,13 +104,39 @@ if (FortranCInterface_GLOBAL_SUFFIX STREQUAL "_")
   add_definitions (-DUNDERSCORE)
 endif ()
 
-# === Tweak SIZE file ==========================================================
-# TODO: Tweak SIZE file
+# === Tweak SIZE file =============================================================================
 
-# === Tweak .usr file ==========================================================
-# TODO: Tweak .usr file
+set (SIZE_FILE "${CMAKE_CURRENT_BINARY_DIR}/SIZE")
+message("-- Configuring SIZE file: ${SIZE_FILE}")
+execute_process(
+  COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/bin/config_size.sh" "${SIZE_FILE}" 
+  #  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  RESULT_VARIABLE   CONFIG_SIZE_RETURN_VAL
+  OUTPUT_VARIABLE   CONFIG_SIZE_STDERR
+  ERROR_VARIABLE    CONFIG_SIZE_STDERR
+)
+if (NOT CONFIG_SIZE_RETURN_VAL EQUAL 0) 
+  message(FATAL_ERROR "Could not configure SIZE file: ${SIZE_FILE}\n${CONFIG_SIZE_STDERR}")
+endif ()
 
-# === Makefile targets =========================================================
+# === Tweak .usr file =============================================================================
+
+set (USR_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CASENAME}.usr")
+message("-- Configuring .usr file: ${USR_FILE}")
+execute_process(
+  COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/bin/config_usr.sh" "${USR_FILE}" 
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  RESULT_VARIABLE   CONFIG_USR_RETURN_VAL
+  OUTPUT_VARIABLE   CONFIG_USR_STDERR
+  ERROR_VARIABLE    CONFIG_USR_STDERR
+)
+if (NOT CONFIG_USR_RETURN_VAL EQUAL 0) 
+  message(FATAL_ERROR "Could not configure .usr file: ${USR_FILE}\n${CONFIG_USR_STDERR}")
+endif ()
+
+# === Makefile targets ============================================================================
+
+add_executable(nek5000 core/drive.f)
 
 # Core FORTRAN source
 set (NEK_CORE_F_SRC drive1.f drive2.f plan4.f bdry.f coef.f conduct.f connect1.f connect2.f dssum.f
@@ -119,7 +145,7 @@ set (NEK_CORE_F_SRC drive1.f drive2.f plan4.f bdry.f coef.f conduct.f connect1.f
   gfdm_par.f  gfdm_op.f gfdm_solve.f subs1.f subs2.f genbox.f gmres.f hsmg.f convect.f induct.f
   perturb.f navier5.f navier6.f navier7.f navier8.f fast3d.f fasts.f calcz.f byte_mpi.f postpro.f
   cvode_driver.f vprops.f qthermal.f cvode_aux.f makeq_aux.f papi.f nek_in_situ.f readat_new.f
-  ${CASENAME}.f)
+  ${CMAKE_CURRENT_BINARY_DIR}/${CASENAME}.f)
 
 # Math source
 set (NEK_MATH_SRC "math.f")
@@ -141,11 +167,12 @@ else ()
 endif ()
 
 # MPI source
-# TODO: Handle creation/deletion of mpif.h
-if (MPI)
+if (IFMPI)
   set (NEK_MPI_SRC byte_mpi.f comm_mpi.f)
+  add_custom_command(TARGET nek5000 PRE_BUILD COMMAND echo "" > ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
 else ()
   set (NEK_MPI_SRC byte_mpi.f comm_mpi.f mpi_dummy.f)
+  add_custom_command(TARGET nek5000 PRE_BUILD COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/core/mpi_dummy.h ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
 endif ()
 
 # MXM source
@@ -177,8 +204,6 @@ if (AMG)
 else ()
   set (JL_CGS_SRC sparse_cholesky.f xxt.f fcrs.f)
 endif ()
-
-add_executable(nek5000 core/drive.f)
 
 # === Compiler Flags =================================================
 
