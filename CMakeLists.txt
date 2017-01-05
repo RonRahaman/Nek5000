@@ -107,11 +107,10 @@ endif ()
 
 # === Tweak SIZE file =============================================================================
 
-set (SIZE_FILE "${CMAKE_CURRENT_BINARY_DIR}/SIZE")
+set (SIZE_FILE "${CMAKE_BINARY_DIR}/SIZE")
 message("-- Configuring SIZE file: ${SIZE_FILE}")
 execute_process(
   COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/bin/config_size.sh" "${SIZE_FILE}" 
-  #  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   RESULT_VARIABLE   CONFIG_SIZE_RETURN_VAL
   OUTPUT_VARIABLE   CONFIG_SIZE_STDERR
   ERROR_VARIABLE    CONFIG_SIZE_STDERR
@@ -122,11 +121,10 @@ endif ()
 
 # === Tweak .usr file =============================================================================
 
-set (USR_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CASENAME}.usr")
+set (USR_FILE "${CMAKE_BINARY_DIR}/${CASENAME}.usr")
 message("-- Configuring .usr file: ${USR_FILE}")
 execute_process(
   COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/bin/config_usr.sh" "${USR_FILE}" 
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   RESULT_VARIABLE   CONFIG_USR_RETURN_VAL
   OUTPUT_VARIABLE   CONFIG_USR_STDERR
   ERROR_VARIABLE    CONFIG_USR_STDERR
@@ -198,7 +196,7 @@ set (NEK_CORE_F_SRC
   core/subs2.f
   core/turb.f
   core/vprops.f
-  ${CMAKE_CURRENT_BINARY_DIR}/${CASENAME}.f
+  ${CMAKE_BINARY_DIR}/${CASENAME}.f
 )
 
 # Math source
@@ -349,7 +347,7 @@ else ()
   add_dependencies("${NEK_LIB}" CP_MPI_DUMMY_H)
 endif ()
 
-include_directories("${CMAKE_CURRENT_BINARY_DIR}" core/ jl/)
+include_directories("${CMAKE_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" core/ jl/)
 
 if (CMTNEK)
   include_directories(core/cmt)
