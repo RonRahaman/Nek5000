@@ -134,9 +134,11 @@ if (NOT CONFIG_USR_RETURN_VAL EQUAL 0)
   message(FATAL_ERROR "Could not configure .usr file: ${USR_FILE}\n${CONFIG_USR_STDERR}")
 endif ()
 
-# === Makefile targets ============================================================================
+# === Source Files ================================================================================
 
-add_executable(nek5000 core/drive.f)
+# The source files are separated into groups.  Each group will require a different set of compiler
+# flags and/or dependencies.  See the "Compiler Flags" and "Targets and Dependencies" sections
+# below.
 
 # Core FORTRAN source
 set (NEK_CORE_F_SRC 
@@ -224,16 +226,8 @@ endif ()
 # MPI source
 if (IFMPI)
   set (NEK_MPI_SRC core/byte_mpi.f core/comm_mpi.f)
-  add_custom_command(
-    TARGET nek5000 PRE_BUILD 
-    COMMAND echo "" > ${CMAKE_CURRENT_BINARY_DIR}/mpif.h
-  )
 else ()
-  set (NEK_MPI_SRC core/byte_mpi.f core/comm_mpi.f core/mpi_dummy.f)
-  add_custom_command(
-    TARGET nek5000 PRE_BUILD 
-    COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/core/mpi_dummy.h ${CMAKE_CURRENT_BINARY_DIR}/mpif.h
-  )
+  set (NEK_MPI_SRC ${CMAKE_CURRENT_BINARY_DIR}/mpif.h core/byte_mpi.f core/comm_mpi.f core/mpi_dummy.f)
 endif ()
 
 # MXM source
@@ -292,6 +286,13 @@ else ()
   set (JL_CGS_SRC jl/fcrs.c jl/sparse_cholesky.c jl/xxt.c)
 endif ()
 
+# All the source files
+set (NEK_LIB_SRC
+  "${NEK_CORE_F_SRC};${NEK_MATH_SRC};${NEK_BLAS_SRC};${NEK_CMT_SRC};${NEK_MPI_SRC};${NEK_MXM_SRC};\
+${NEK_NEKNEK_SRC};${NEK_CORE_C_SRC};${JL_CORE_SRC};${JL_INTERP_SRC};${JL_CGS_SRC}"
+)
+set (NEK_EXEC_SRC "core/drive.f;${NEK_LIB_SRC}")
+
 # === Compiler Flags =================================================
 
 # Compiler-specific FFLAGs
@@ -323,3 +324,47 @@ set (CMAKE_Fortran_FLAGS_DEBUG "${COMP_SPEC_FFLAGS} -g -O2")
 set_source_files_properties ("${NEK_BLAS_SRC}" PROPERTIES CMAKE_Fortran_FLAGS_DEBUG "${COMP_SPEC_FFLAGS} -g -O0" )
 set_source_files_properties ("${NEK_MATH_SRC}" PROPERTIES CMAKE_Fortran_FLAGS_DEBUG "${COMP_SPEC_FFLAGS} -O3" )
 set_source_files_properties ("${NEK_MXM_SRC}"  PROPERTIES CMAKE_Fortran_FLAGS_DEBUG "${COMP_SPEC_FFLAGS} -O3" )
+
+# === Targets and Dependencies  ==================================================================
+
+add_executable(nek5000 ${NEK_EXEC_SRC})
+
+add_custom_target(
+  RM_MPIF_H
+  COMMAND echo "-- DELETING mpif.h "
+  COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/mpif.h
+)
+
+add_custom_target(
+  CP_MPI_DUMMY_H
+  COMMAND echo "-- COPYTING mpi_dummy.h --> mpif.h "
+  COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/core/mpi_dummy.h ${CMAKE_CURRENT_BINARY_DIR}/mpif.h
+)
+
+if (IFMPI)
+  add_dependencies(nek5000 RM_MPIF_H)
+else ()
+  add_dependencies(nek5000 CP_MPI_DUMMY_H)
+endif ()
+
+include_directories("${CMAKE_CURRENT_BINARY_DIR}" core/ jl/)
+
+if (CMTNEK)
+  include_directories(core/cmt)
+endif ()
+
+#if (IFMPI)
+#   add_custom_command(TARGET nek5000 PRE_BUILD 
+#     COMMAND echo "-- DELETING mpif.h "
+#     COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
+# add_custom_target(mpif.h 
+#   COMMAND echo "-- DELETING mpif.h "
+#   COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
+# else ()
+#   add_custom_command(TARGET nek5000 PRE_BUILD 
+#     COMMAND echo "-- COPYTING mpi_dummy.h --> mpif.h "
+#     COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/core/mpi_dummy.h ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
+# add_custom_command(mpif.h
+#   COMMAND echo "-- COPYTING mpi_dummy.h --> mpif.h "
+#   COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/core/mpi_dummy.h ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
+# endif ()
