@@ -114,7 +114,7 @@ execute_process(
   RESULT_VARIABLE   CONFIG_SIZE_RETURN_VAL
   OUTPUT_VARIABLE   CONFIG_SIZE_STDERR
   ERROR_VARIABLE    CONFIG_SIZE_STDERR
-)
+  )
 if (NOT CONFIG_SIZE_RETURN_VAL EQUAL 0) 
   message(FATAL_ERROR "Could not configure SIZE file: ${SIZE_FILE}\n${CONFIG_SIZE_STDERR}")
 endif ()
@@ -129,7 +129,7 @@ execute_process(
   RESULT_VARIABLE   CONFIG_USR_RETURN_VAL
   OUTPUT_VARIABLE   CONFIG_USR_STDERR
   ERROR_VARIABLE    CONFIG_USR_STDERR
-)
+  )
 if (NOT CONFIG_USR_RETURN_VAL EQUAL 0) 
   message(FATAL_ERROR "Could not configure .usr file: ${USR_FILE}\n${CONFIG_USR_STDERR}")
 endif ()
@@ -139,22 +139,77 @@ endif ()
 add_executable(nek5000 core/drive.f)
 
 # Core FORTRAN source
-set (NEK_CORE_F_SRC drive1.f drive2.f plan4.f bdry.f coef.f conduct.f connect1.f connect2.f dssum.f
-  edgec.f eigsolv.f gauss.f genxyz.f navier1.f makeq.f navier0.f navier2.f navier3.f navier4.f
-  prepost.f speclib.f map2.f turb.f mvmesh.f ic.f ssolv.f planx.f mxm_wrapper.f hmholtz.f
-  gfdm_par.f  gfdm_op.f gfdm_solve.f subs1.f subs2.f genbox.f gmres.f hsmg.f convect.f induct.f
-  perturb.f navier5.f navier6.f navier7.f navier8.f fast3d.f fasts.f calcz.f byte_mpi.f postpro.f
-  cvode_driver.f vprops.f qthermal.f cvode_aux.f makeq_aux.f papi.f nek_in_situ.f readat_new.f
-  ${CMAKE_CURRENT_BINARY_DIR}/${CASENAME}.f)
+set (NEK_CORE_F_SRC 
+  core/3rd_party/nek_in_situ.f
+  core/bdry.f
+  core/byte_mpi.f
+  core/calcz.f
+  core/coef.f
+  core/conduct.f
+  core/connect1.f
+  core/connect2.f
+  core/convect.f
+  core/cvode_driver.f
+  core/drive1.f
+  core/drive2.f
+  core/dssum.f
+  core/edgec.f
+  core/eigsolv.f
+  core/fast3d.f
+  core/fasts.f
+  core/gauss.f
+  core/genbox.f
+  core/genxyz.f
+  core/gfdm_op.f
+  core/gfdm_par.f
+  core/gfdm_solve.f
+  core/gmres.f
+  core/hmholtz.f
+  core/hsmg.f
+  core/ic.f
+  core/induct.f
+  core/makeq.f
+  core/makeq_aux.f
+  core/map2.f
+  core/mvmesh.f
+  core/mxm_wrapper.f
+  core/navier0.f
+  core/navier1.f
+  core/navier2.f
+  core/navier3.f
+  core/navier4.f
+  core/navier5.f
+  core/navier6.f
+  core/navier7.f
+  core/navier8.f
+  core/papi.f
+  core/perturb.f
+  core/plan4.f
+  core/planx.f
+  core/postpro.f
+  core/prepost.f
+  core/readat_new.f
+  core/speclib.f
+  core/ssolv.f
+  core/subs1.f
+  core/subs2.f
+  core/turb.f
+  core/vprops.f
+  ${CMAKE_CURRENT_BINARY_DIR}/${CASENAME}.f
+)
 
 # Math source
-set (NEK_MATH_SRC "math.f")
+set (NEK_MATH_SRC core/math.f)
 
 # BLAS/LAPACK source
 if (VENDOR_BLAS OR BGQ)
   set (NEK_BLAS_SRC "")
 else ()
-  set (NEK_BLAS_SRC blas.f dsygv.f ssygv.f)
+  set (NEK_BLAS_SRC 
+    core/3rd_party/blas.f 
+    core/3rd_party/dsygv.f 
+    core/3rd_party/ssygv.f
+  )
 endif ()
 
 # CMT source
@@ -168,41 +223,73 @@ endif ()
 
 # MPI source
 if (IFMPI)
-  set (NEK_MPI_SRC byte_mpi.f comm_mpi.f)
-  add_custom_command(TARGET nek5000 PRE_BUILD COMMAND echo "" > ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
+  set (NEK_MPI_SRC core/byte_mpi.f core/comm_mpi.f)
+  add_custom_command(
+    TARGET nek5000 PRE_BUILD 
+    COMMAND echo "" > ${CMAKE_CURRENT_BINARY_DIR}/mpif.h
+  )
 else ()
-  set (NEK_MPI_SRC byte_mpi.f comm_mpi.f mpi_dummy.f)
-  add_custom_command(TARGET nek5000 PRE_BUILD COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/core/mpi_dummy.h ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
+  set (NEK_MPI_SRC core/byte_mpi.f core/comm_mpi.f core/mpi_dummy.f)
+  add_custom_command(
+    TARGET nek5000 PRE_BUILD 
+    COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/core/mpi_dummy.h ${CMAKE_CURRENT_BINARY_DIR}/mpif.h
+  )
 endif ()
 
 # MXM source
 if (BGQ)
-  set (NEK_MXM_SRC mxm_std.f mxm_bgq.f)
+  set (NEK_MXM_SRC core/mxm_bgq.f core/mxm_std.f)
 else ()
-  set (NEK_MXM_SRC mxm_std.f)
+  set (NEK_MXM_SRC core/mxm_std.f)
 endif ()
 
 # NEKNEK source
 if (NEKNEK)
-  set (NEK_NEKNEK_SRC multimesh.f)
+  set (NEK_NEKNEK_SRC core/multimesh.f)
 else ()
-  set (NEK_NEKNEK_SRC singlmesh.f)
+  set (NEK_NEKNEK_SRC core/singlmesh.f)
 endif ()
 
 # Core C source
-set (NEK_CORE_C_SRC byte.f chelpers.f nek_comm.f finiparser.f iniparser.f dictionary.f)
+set (NEK_CORE_C_SRC 
+  core/3rd_party/dictionary.c
+  core/3rd_party/finiparser.c
+  core/3rd_party/iniparser.c 
+  core/byte.c 
+  core/chelpers.c 
+  core/nek_comm.c 
+)
 
 # JL core source
-set (JL_CORE_SRC gs.f sort.f sarray_transfer.f sarray_sort.f gs_local.f crystal.f comm.f tensor.f fail.f fcrystal.f)
+set (JL_CORE_SRC
+  jl/comm.c
+  jl/crystal.c
+  jl/fail.c
+  jl/fcrystal.c
+  jl/gs.c
+  jl/gs_local.c
+  jl/sarray_sort.c
+  jl/sarray_transfer.c
+  jl/sort.c
+  jl/tensor.c
+)
 
 # JL interpolation source
-set (JL_INTERP_SRC findpts.f findpts_local.f obbox.f poly.f lob_bnd.f findpts_el_3.f findpts_el_2.f)
+set (JL_INTERP_SRC 
+  jl/findpts.c 
+  jl/findpts_el_2.c
+  jl/findpts_el_3.c 
+  jl/findpts_local.c 
+  jl/lob_bnd.c 
+  jl/obbox.c 
+  jl/poly.c 
+)
 
 # JL conjugate gradient solver source
 if (AMG)
-  set (JL_CGS_SRC amg.f fcrs.f)
+  set (JL_CGS_SRC jl/amg.c jl/fcrs.c)
 else ()
-  set (JL_CGS_SRC sparse_cholesky.f xxt.f fcrs.f)
+  set (JL_CGS_SRC jl/fcrs.c jl/sparse_cholesky.c jl/xxt.c)
 endif ()
 
 # === Compiler Flags =================================================
