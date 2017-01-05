@@ -17,7 +17,8 @@ set (NEKNEK      OFF CACHE BOOL   "YP NekNek solver"                            
 set (CMTNEK      OFF CACHE BOOL   "enable DG compressible-flow solver"          )
 
 if (NOT CASENAME)
-  message (FATAL_ERROR "For Nek5000, you must provide CASENAME cache variable when running cmake (e.g. cmake -D CASNAME=my_casename)")
+  message (FATAL_ERROR "For Nek5000, you must provide the CASENAME cache variable when running \
+cmake (e.g. cmake -D CASENAME=my_casename Nek5000/)")
 endif ()
 
 if (BGQ AND NOT VENDOR_BLAS)
@@ -356,19 +357,3 @@ endif ()
 
 add_executable(nek5000 core/drive.f)
 target_link_libraries(nek5000 "${NEK_LIB}")
-
-#if (IFMPI)
-#   add_custom_command(TARGET nek5000 PRE_BUILD 
-#     COMMAND echo "-- DELETING mpif.h "
-#     COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
-# add_custom_target(mpif.h 
-#   COMMAND echo "-- DELETING mpif.h "
-#   COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
-# else ()
-#   add_custom_command(TARGET nek5000 PRE_BUILD 
-#     COMMAND echo "-- COPYTING mpi_dummy.h --> mpif.h "
-#     COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/core/mpi_dummy.h ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
-# add_custom_command(mpif.h
-#   COMMAND echo "-- COPYTING mpi_dummy.h --> mpif.h "
-#   COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/core/mpi_dummy.h ${CMAKE_CURRENT_BINARY_DIR}/mpif.h)
-# endif ()
