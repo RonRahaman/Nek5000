@@ -36,9 +36,21 @@ You can download the latest release of Nek5000 [here](https://github.com/Nek5000
 1. Unpack the tarball to `~/Nek5000`
 2. Add `~/Nek5000/bin` to your shell search path
 3. Copy `~/Nek5000/short-tests/eddy` to `~/nekcases/eddy`
-4. Copy `~/Nek5000/core/makenek ` to `~/nekcases/eddy`
-5. Go to `~/nekcases/eddy` and run `./makenek eddy` (see makenek for build options)
-5. You can run the case using two processes with `nekmpi eddy 2`
+4. Enter the `~/nekcases/eddy` directory and run CMake:
+     ```
+     $ cd ~/nekcases/eddy
+     $ cmake -D CASENAME=eddy_uv ~/Nek5000
+     ```
+   CASENAME is a CMake variable that identifies the Nek5000 case name (i.e., the name of the .usr
+   and .rea files).  You may modify it for other cases.  The second argument (~/Nek5000) points the
+   top-level source directory; you may direct it to anohter source directory, if you like.  
+5. While still in the `~/nekcases/eddy` directory, simply run
+     ```
+     $ make
+     ```
+   This will display abbreviated output for the build process.  You may show verbose output,
+   including the commands used to invoke the compiler, by running `make VERBOSE=1`.
+7. You can run the case using two processes with `nekmpi eddy 2`
 
 **Note:** For more information see [here](http://nek5000.github.io/NekDoc/Nek_usersch2.html)
 
