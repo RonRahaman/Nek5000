@@ -1,3 +1,59 @@
+
+Took this commit
+e62804ff887485a16d4a3dfc81b5eac57602e379
+
+and rebased on top of this commit
+62aba6d5efdc0203f4c7199a521c81a82e289673
+
+The last stable commit (wrt. NekTests.py) was SVN r1074:
+92b9d5faed48798cbfb4c1b42edcbf546e7615cf
+
+
+
+This will allow you to run the bisection with NekTests.  
+
+## Setting up your repos for bisection
+
+First, run the following routines
+
+```
+mkdir -p $HOME/nek-bisect/
+cd $HOME/nek-bisect/
+
+git clone -b master              https://github.com/Nek5000/Nek5000.git     Nek5000-master
+git clone -b rebase-for-bisect-7 https://github.com/RonRahaman/Nek5000.git  Nek5000
+git clone                        https://github.com/Nek5000/NekExamples.git NekExamples && \
+  cd NekExamples && \
+  git checkout adb923dd1707fd0f790291293b62b399147505e3 && \
+  cd -
+
+export CC="mpicc"
+export F77="mpif77"
+export IFMPI="true"
+export SOURCE_ROOT="$HOME/nek-bisect/Nek5000"
+export TOOLS_ROOT="$HOME/nek-bisect/Nek5000-master/tools"
+export EXAMPLES_ROOT="$HOME/nek-bisect/NekExamples"
+export PYTHONPATH="$EXAMPLES_ROOT:$PYTHONPATH"
+export PATH="$EXAMPLES_ROOT:$PATH"
+```
+
+## Running a bisection
+
+Then, to start a bisection (e.g., for the `Pipe_Helix.test_PnPn_Parallel` test):
+
+```
+cd $HOME/nek-bisect/Nek5000
+git bisect start HEAD 92b9d5faed48798cbfb4c1b42edcbf546e7615cf --
+git bisect run python -m 'unittest' NekTests.Pipe_Helix.test_PnPn_Parallel
+git bisect reset
+```
+
+Alternately, you can use the script:
+``
+./nek-bisect.sh Pipe_Helix.test_PnPn_Parallel
+``
+
+
 # Nek5000 
 ![https://travis-ci.org/Nek5000/Nek5000](https://travis-ci.org/Nek5000/Nek5000.svg?branch=develop)
 [![GPLv3 licensed](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://raw.githubusercontent.com/Nek5000/nek5000/develop/LICENSE)
