@@ -292,20 +292,20 @@ C     to (1,1,...,1)T  (only if all Dirichlet b.c.).
          if (ifvcor) then
             rlam  = glsum_acc (respr,ntot)/ntotg
             !call cadd (respr,-rlam,ntot)
-!$ACC PARALLEL LOOP GANG VECTOR PRESENT(respr)
+!$ACC KERNELS PRESENT(respr)
             do i=1,ntot
                respr(i) = -rlam+respr(i)
             enddo
-!$ACC END PARALLEL LOOP
+!$ACC END KERNELS
          endif
        elseif (ifield.eq.ifldmhd) then
          if (ifbcor) then
             rlam = glsum_acc (respr,ntot)/ntotg
-!$ACC PARALLEL LOOP GANG VECTOR PRESENT(respr)
+!$ACC KERNELS PRESENT(respr)
             do i=1,ntot
                respr(i) = -rlam+respr(i)
             enddo
-!$ACC END PARALLEL LOOP
+!$ACC END KERNELS
 !           call cadd (respr,-rlam,ntot)
          endif
        else

@@ -1918,7 +1918,7 @@ c-----------------------------------------------------------------------
 
       TSUM = 0.
 
-!$ACC KERNELS
+!$ACC KERNELS PRESENT (X)
       DO I=1,N
          TSUM = TSUM+X(I)
       ENDDO
@@ -1938,22 +1938,22 @@ c--------------------------------------------------------
 !MJO - 3/15/17 - ACC version of col2
 !     a little hack to make dsavg work easily
 
-!$ACC PARALLEL LOOP GANG VECTOR PRESENT(a,b)
+!$ACC KERNELS PRESENT(a,b)
       do i=1,n
          a(i) = a(i) * b(i)
       enddo
-!$ACC END PARALLEL LOOP
+!$ACC END KERNELS
       return
       end
 c-----------------------------------------------------------------------
       subroutine col3_acc(a,b,c,n)
       real a(n),b(n),c(n)
 
-!$ACC PARALLEL LOOP PRESENT(a,b,c)
+!$ACC KERNELS PRESENT(a,b,c)
       do i=1,n
          a(i)=b(i)*c(i)
       enddo
-!$ACC END PARALLEL
+!$ACC END KERNELS
 
       return
       end

@@ -2312,10 +2312,10 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine cmult2_acc (a,b,const,n)
       dimension a(n),b(n)
-!$ACC PARALLEL LOOP
+!$ACC KERNELS PRESENT(a, b)
       do i=1,n
          a(i)=b(i)*const
       enddo
-!$ACC END PARALLEL
+!$ACC END KERNELS
       return
       end

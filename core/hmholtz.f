@@ -392,7 +392,7 @@ c
          call global_grad3(dxm1,u,dudr,duds,dudt)
 
 !FIXME: Create a new subroutine for this kernel
-!$ACC PARALLEL LOOP GANG VECTOR
+!$ACC KERNELS
          do i=1,ntot
             tmp1(i) = helm1(i)*(
      $           + dudr(i)*g1m1(i,1,1,1)
@@ -409,7 +409,7 @@ c
      $           + dudr(i)*g5m1(i,1,1,1)
      $           + duds(i)*g6m1(i,1,1,1))
          enddo
-!$ACC END PARALLEL LOOP
+!$ACC END KERNELS
 
 c$$$  CALL COL3    (TMP1,DUDR,G1M1,NTOT)
 c$$$  CALL ADDCOL3 (TMP1,DUDS,G4M1,NTOT)
@@ -429,11 +429,11 @@ c$$$  CALL COL2    (TMP3,HELM1,NTOT)
 !FIXME: Div should also include summation
          CALL global_div3(dxtm1,tmp1,tmp2,tmp3,tm1,tm2,tm3)
 
-!$ACC PARALLEL LOOP GANG VECTOR
+!$ACC KERNELS COPYIN(tm1,tm2,tm3)
          do i=1,ntot
             au(i) = tm1(i)+tm2(i)+tm3(i)
          enddo
-!$ACC END PARALLEL LOOP
+!$ACC END KERNELS
 
 
 

@@ -379,11 +379,11 @@ C
 #endif
 C
       DT = 0.0
-!$ACC PARALLEL LOOP PRESENT(X,Y,B) REDUCTION(+:DT)
+!$ACC KERNELS PRESENT(X,Y,B)
       DO I=1,N
          DT = DT+X(I)*Y(I)*B(I)
       ENDDO
-!$ACC END PARALLEL LOOP
+!$ACC END KERNELS
       T=DT
       VLSC3 = T
       RETURN
