@@ -357,9 +357,6 @@ c     data    iflag,if_hyb  /.false. , .true. /
 
 c     ROR 2017-05-22: Separate copyin/copyout statements are used for
 c     res, h1, h2, and wt, since they are local variables.  
-
-      call hmh_gmres_acc_data_copyin()
-
 !$ACC ENTER DATA COPYIN(res,h1,h2,wk1)
 
 #ifdef _OPENACC

@@ -961,7 +961,8 @@ c
 c
       if (ifsplit.and.name.eq.'PRES'.and.param(42).eq.0) then
          n = nx1*ny1*nz1*nelv
-         call copy      (x,f,n)
+         call hmh_gmres_acc_data_copyin()
+         call copy_acc  (x,f,n)
          call hmh_gmres (x,h1,h2,mult,iter)
          niterhm = iter
          return
