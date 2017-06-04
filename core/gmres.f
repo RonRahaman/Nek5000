@@ -366,11 +366,11 @@ c     res, h1, h2, and wt, since they are local variables.
 
 !$ACC ENTER DATA COPYIN(res,h1,h2,wk1)
 
-      if (param(100).ne.2) call set_fdm_prec_h1b(d,h1,h2,nelv)
-
 #ifdef _OPENACC
+      if (param(100).ne.2) call set_fdm_prec_h1b_acc(d,h1,h2,nelv)
       call chktcg1_acc(tolps,res,h1,h2,pmask,vmult,1,1)
 #else
+      if (param(100).ne.2) call set_fdm_prec_h1b(d,h1,h2,nelv)
       call chktcg1(tolps,res,h1,h2,pmask,vmult,1,1)
 #endif
 

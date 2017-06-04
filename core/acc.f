@@ -46,6 +46,7 @@ c-----------------------------------------------------------------------
       include 'TSTEP'
       include 'CTIMER'
       include 'PARALLEL'
+      include 'FDMH1'
 
       parameter (lt=lx1*ly1*lz1*lelt)
       common /scrmg/ e(2*lt),w(lt),r(lt)
@@ -70,8 +71,9 @@ c-----------------------------------------------------------------------
 !$ACC ENTER DATA COPYIN(r_gmres)
 !$ACC ENTER DATA COPYIN(ml_gmres,mu_gmres)
 
-c ROR: 2017-06-04: Does d need to be copyin or can it be create?
+c ROR: 2017-06-04: Do these need to be COPYIN or can they be CREATE?
 !$ACC ENTER DATA COPYIN(d)
+!$ACC ENTER DATA COPYIN(dd,elsize,ktype)
 
 !$ACC ENTER DATA CREATE(e,w,r)
 !$ACC ENTER DATA CREATE(w1,w2)

@@ -1686,11 +1686,28 @@ c
 c     Set up diagonal for FDM for each spectral element 
 c
       nxyz = nx1*ny1*nz1
+
       if (if3d) then
-!$ACC KERNELS PRESENT(d,h1,h2)
+
+!$ACC KERNELS PRESENT(d,dd,elsize,h1,h2,ktype)
          do ie=1,nel
-            h1b = vlsum(h1(1,1,1,ie),nxyz)/nxyz
-            h2b = vlsum(h2(1,1,1,ie),nxyz)/nxyz
+
+c           ROR: 2017-06-04: Inlined the following to expose paralelism:
+c               h1b = vlsum(h1(1,1,1,ie),nxyz)/nxyz
+c               h2b = vlsum(h2(1,1,1,ie),nxyz)/nxyz
+
+            h1b = 0.0
+            do k = 1, nxyz
+               h1b = h1b + h1(k,1,1,ie)
+            enddo
+            h1b = h1b / nxyz
+
+            h2b = 0.0
+            do k = 1, nxyz
+               h2b = h2b + h2(k,1,1,ie)
+            enddo
+            h2b = h2b / nxyz
+
             k1 = ktype(ie,1,kfldfdm)
             k2 = ktype(ie,2,kfldfdm)
             k3 = ktype(ie,3,kfldfdm)
@@ -1698,6 +1715,7 @@ c
             vl1 = elsize(2,ie)*elsize(3,ie)/elsize(1,ie)
             vl2 = elsize(1,ie)*elsize(3,ie)/elsize(2,ie)
             vl3 = elsize(1,ie)*elsize(2,ie)/elsize(3,ie)
+
             do i3=1,nz1
             do i2=1,ny1
             do i1=1,nx1
@@ -1708,18 +1726,13 @@ c
                   d(i1,i2,i3,ie) = 1./den
                else
                   d(i1,i2,i3,ie) = 0.
-c
-c                 write(6,3) 'd=0:'
-c    $                 ,h1(i1,i2,i3,ie),dd(i1,k1),dd(i2,k2),dd(i3,k3)
-c    $                 ,i1,i2,i3,ie,kfldfdm,k1,k2,k3
-    3             format(a4,1p4e12.4,8i8)
-c
                endif
             enddo
             enddo
             enddo
          enddo
 !$ACC END KERNELS
+
       else
 
          if(nid.eq.0) write(6,*)
