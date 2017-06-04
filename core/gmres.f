@@ -359,14 +359,14 @@ c     data    iflag,if_hyb  /.false. , .true. /
          norm_fac = 1./sqrt(volvm1)
       endif
 
-      if (param(100).ne.2) call set_fdm_prec_h1b(d,h1,h2,nelv)
-
 c     ROR 2017-05-22: Separate copyin/copyout statements are used for
 c     res, h1, h2, and wt, since they are local variables.  
 
       call hmh_gmres_acc_data_copyin()
 
 !$ACC ENTER DATA COPYIN(res,h1,h2,wk1)
+
+      if (param(100).ne.2) call set_fdm_prec_h1b(d,h1,h2,nelv)
 
 #ifdef _OPENACC
       call chktcg1_acc(tolps,res,h1,h2,pmask,vmult,1,1)

@@ -53,6 +53,7 @@ c-----------------------------------------------------------------------
       common /hsmgw/ work(0:lwk-1),work2(0:lwk-1)
       common /ctmp0/ w1   (lx1,ly1,lz1,lelt)
      $             , w2   (lx1,ly1,lz1,lelt)
+      common /scrcg/ d(lx1*ly1*lz1*lelv)
 
       integer icalld
       save    icalld
@@ -68,6 +69,9 @@ c-----------------------------------------------------------------------
 !$ACC ENTER DATA COPYIN(c_gmres,s_gmres,x_gmres,gamma_gmres)
 !$ACC ENTER DATA COPYIN(r_gmres)
 !$ACC ENTER DATA COPYIN(ml_gmres,mu_gmres)
+
+c ROR: 2017-06-04: Does d need to be copyin or can it be create?
+!$ACC ENTER DATA COPYIN(d)
 
 !$ACC ENTER DATA CREATE(e,w,r)
 !$ACC ENTER DATA CREATE(w1,w2)
@@ -102,6 +106,7 @@ c-----------------------------------------------------------------------
       common /hsmgw/ work(0:lwk-1),work2(0:lwk-1)
       common /ctmp0/ w1   (lx1,ly1,lz1,lelt)
      $ ,             w2   (lx1,ly1,lz1,lelt)
+      common /scrcg/ d(lx1*ly1*lz1*lelv)
 
 cc!$ACC EXIT DATA DELETE(work,work2)
 cc!$ACC EXIT DATA DELETE(mg_mask,mg_imask,pmask)
@@ -116,6 +121,9 @@ cc!$ACC EXIT DATA COPYOUT(ml_gmres,mu_gmres)
 cc!$ACC EXIT DATA COPYOUT(h1,h2)
 cc!$ACC EXIT DATA COPYOUT(binvm1,bintm1)
 cc!$ACC EXIT DATA DELETE(w1,w2)
+
+c ROR: 2017-06-04: Does d need to be copyout or can it be delete?
+!$ACC EXIT DATA COPYOUT(d)
 
 #endif
       return

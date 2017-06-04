@@ -1674,6 +1674,99 @@ c
       return
       end
 c-----------------------------------------------------------------------
+      subroutine set_fdm_prec_h1b_acc(d,h1,h2,nel)
+      include 'SIZE'
+      include 'FDMH1'
+      include 'INPUT'
+      include 'GEOM'
+      real d (nx1,ny1,nz1,1)
+      real h1(nx1,ny1,nz1,1)
+      real h2(nx1,ny1,nz1,1)
+c
+c     Set up diagonal for FDM for each spectral element 
+c
+      nxyz = nx1*ny1*nz1
+      if (if3d) then
+!$ACC KERNELS PRESENT(d,h1,h2)
+         do ie=1,nel
+            h1b = vlsum(h1(1,1,1,ie),nxyz)/nxyz
+            h2b = vlsum(h2(1,1,1,ie),nxyz)/nxyz
+            k1 = ktype(ie,1,kfldfdm)
+            k2 = ktype(ie,2,kfldfdm)
+            k3 = ktype(ie,3,kfldfdm)
+            vol = elsize(1,ie)*elsize(2,ie)*elsize(3,ie)
+            vl1 = elsize(2,ie)*elsize(3,ie)/elsize(1,ie)
+            vl2 = elsize(1,ie)*elsize(3,ie)/elsize(2,ie)
+            vl3 = elsize(1,ie)*elsize(2,ie)/elsize(3,ie)
+            do i3=1,nz1
+            do i2=1,ny1
+            do i1=1,nx1
+               den = h1b*(vl1*dd(i1,k1) + vl2*dd(i2,k2) + vl3*dd(i3,k3))
+     $             + h2b*vol
+               if (ifbhalf) den = den/vol
+               if (den.ne.0) then
+                  d(i1,i2,i3,ie) = 1./den
+               else
+                  d(i1,i2,i3,ie) = 0.
+c
+c                 write(6,3) 'd=0:'
+c    $                 ,h1(i1,i2,i3,ie),dd(i1,k1),dd(i2,k2),dd(i3,k3)
+c    $                 ,i1,i2,i3,ie,kfldfdm,k1,k2,k3
+    3             format(a4,1p4e12.4,8i8)
+c
+               endif
+            enddo
+            enddo
+            enddo
+         enddo
+!$ACC END KERNELS
+      else
+
+         if(nid.eq.0) write(6,*)
+     $        '2D Not currently implemented for for OpenACC'
+         call exitt()
+
+         do ie=1,nel
+            if (ifaxis) then
+               h1b = vlsc2(h1(1,1,1,ie),ym1(1,1,1,ie),nxyz)/nxyz
+               h2b = vlsc2(h2(1,1,1,ie),ym1(1,1,1,ie),nxyz)/nxyz
+            else
+               h1b = vlsum(h1(1,1,1,ie),nxyz)/nxyz
+               h2b = vlsum(h2(1,1,1,ie),nxyz)/nxyz
+            endif
+            k1 = ktype(ie,1,kfldfdm)
+            k2 = ktype(ie,2,kfldfdm)
+            vol = elsize(1,ie)*elsize(2,ie)
+            vl1 = elsize(2,ie)/elsize(1,ie)
+            vl2 = elsize(1,ie)/elsize(2,ie)
+            i3=1
+            do i2=1,ny1
+            do i1=1,nx1
+               den = h1b*( vl1*dd(i1,k1) + vl2*dd(i2,k2) )
+     $             + h2b*vol
+               if (ifbhalf) den = den/vol
+               if (den.ne.0) then
+                  d(i1,i2,i3,ie) = 1./den
+c                 write(6,3) 'dn0:'
+c    $                 ,d(i1,i2,i3,ie),dd(i1,k1),dd(i2,k2)
+c    $                 ,i1,i2,i3,ie,kfldfdm,k1,k2
+               else
+                  d(i1,i2,i3,ie) = 0.
+c                 write(6,3) 'd=0:'
+c    $                 ,h1(i1,i2,i3,ie),dd(i1,k1),dd(i2,k2)
+c    $                 ,i1,i2,i3,ie,kfldfdm,k1,k2
+    2             format(a4,1p3e12.4,8i8)
+               endif
+c           write(6,1) ie,i1,i2,k1,k2,'d:',d(i1,i2,i3,ie),vol,vl1,vl2
+c   1       format(5i3,2x,a2,1p4e12.4)
+            enddo
+            enddo
+         enddo
+      endif
+c
+      return
+      end
+c-----------------------------------------------------------------------
       subroutine set_fdm_prec_h1A
       include 'SIZE'
 c
