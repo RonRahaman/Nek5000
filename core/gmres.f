@@ -354,10 +354,6 @@ c     data    iflag,if_hyb  /.false. , .true. /
 
       if(.not.iflag) then
          iflag=.true.
-         call uzawa_gmres_split(ml_gmres,mu_gmres,bm1,binvm1,
-     $                          nx1*ny1*nz1*nelv)
-         norm_fac = 1./sqrt(volvm1)
-      endif
 
 c     ROR 2017-05-22: Separate copyin/copyout statements are used for
 c     res, h1, h2, and wt, since they are local variables.  
@@ -365,6 +361,22 @@ c     res, h1, h2, and wt, since they are local variables.
       call hmh_gmres_acc_data_copyin()
 
 !$ACC ENTER DATA COPYIN(res,h1,h2,wk1)
+
+#ifdef _OPENACC
+c        ROR: 2016-06-04: We inlined the call to uzawa_gmres_split() so
+c        the compiler could infer some nested parallelism.
+!$ACC KERNELS PRESENT(ml_gmres,mu_gmres)
+         do k = 1, n
+            ml_gmres(k) = 1.0
+            mu_gmres(k) = 1.0
+         enddo
+!$ACC END KERNELS         
+#else
+         call uzawa_gmres_split(ml_gmres,mu_gmres,bm1,binvm1,
+     $                          nx1*ny1*nz1*nelv)
+#endif
+         norm_fac = 1./sqrt(volvm1)
+      endif
 
 #ifdef _OPENACC
       if (param(100).ne.2) call set_fdm_prec_h1b_acc(d,h1,h2,nelv)
