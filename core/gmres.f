@@ -487,22 +487,31 @@ c           implemented for 2D test cases.
 c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
             call ax  (w_gmres,z_gmres(1,j),h1,h2,n) ! w = A z
 
-            call col2_acc(w_gmres,ml_gmres,n)           ! w = L   w
 
+c           call col2_acc(w_gmres,ml_gmres,n)           ! w = L   w
 #ifdef _OPENACC
 c           ROR: 2016-06-13: For OpenACC, we inlined the calls to
 c           vlsc3() add2s2() so the compiler could infer some nested
 c           parallelism.
 
-!$ACC KERNELS PRESENT(h_gmres, w_gmres, v_gmres, wt)
-            do i=1,j 
-               temp = 0.0
-               do k=1,n
-                  temp = temp + w_gmres(k) * v_gmres(k,i) *  wt(k)
-               enddo
-               h_gmres(i,j) = temp
-            enddo
-!$ACC END KERNELS
+cc !$ACC KERNELS PRESENT(h_gmres, w_gmres, v_gmres, wt)
+cc             do i=1,j 
+cc                temp = 0.0
+cc                do k=1,n
+cc                   temp = temp + w_gmres(k) * v_gmres(k,i) *  wt(k)
+cc                enddo
+cc                h_gmres(i,j) = temp
+cc             enddo
+cc !$ACC END KERNELS
+
+            call col3_acc(w_gmres,wt,ml_gmres,n)           ! w = L *wt*  w 
+            ldv=lx2*ly2*lz2*lelv
+            call dgemv('t',n,j,1.0,v_gmres,ldv,w_gmres,1,0.0,
+     &         h_gmres(1,j),1)
+
+            write(*,*), (h_gmres(i,j), i=1,j)
+
+c           dgemv (TRANS, M, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY)
 
             call gop_acc(h_gmres(1,j),wk1,'+  ',j)
 
@@ -515,6 +524,14 @@ c           parallelism.
 !$ACC END KERNELS
 
 #else
+
+c            This implmentation with col3_acc and dgemv is equivlilant
+c            to the original implementation with vlsc3()
+
+c            call col3_acc(w_gmres,wt,ml_gmres,n)           ! w = L *wt*  w 
+c            ldv=lx2*ly2*lz2*lelv
+c            call dgemv('t',n,j,1.0,v_gmres,ldv,w_gmres,1,0.0,
+c     &         h_gmres(1,j),1)
 
             do i=1,j
                h_gmres(i,j)=vlsc3(w_gmres,v_gmres(1,i),wt,n) ! h    = (w,v )
