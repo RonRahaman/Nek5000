@@ -3581,9 +3581,9 @@ C
       save icalld
       data icalld /0/
 c
-      nxd = lxd
-      nyd = lyd
-      nzd = lzd
+c     nxd = lxd
+c     nyd = lyd
+c     nzd = lzd
       NTOTD = NXD*NYD*NZD*NELV
 c
 c

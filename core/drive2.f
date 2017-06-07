@@ -7,26 +7,26 @@ C-------------------------------------------------------------------
       include 'SIZE'
       include 'INPUT'
 C
-      NX1=LX1
-      NY1=LY1
-      NZ1=LZ1
-C
-      NX2=LX2
-      NY2=LY2
-      NZ2=LZ2
-C
-      NX3=LX3
-      NY3=LY3
-      NZ3=LZ3
-C
-      NXD=LXD
-      NYD=LYD
-      NZD=LZD
+c     NX1=LX1
+c     NY1=LY1
+c     NZ1=LZ1
+c
+c     NX2=LX2
+c     NY2=LY2
+c     NZ2=LZ2
+c
+c     NX3=LX3
+c     NY3=LY3
+c     NZ3=LZ3
+c
+c     NXD=LXD
+c     NYD=LYD
+c     NZD=LZD
 
 C
       NELT=LELT
       NELV=LELV
-      NDIM=LDIM
+c     NDIM=LDIM
 C
       RETURN
       END
@@ -158,9 +158,9 @@ C
 C     Enforce splitting/Uzawa according to the way the code was compiled
 C
 c
-      nxd = lxd
-      nyd = lyd
-      nzd = lzd
+c     nxd = lxd
+c     nyd = lyd
+c     nzd = lzd
 C
 C     Geometry on Mesh 3 or 1?
 C

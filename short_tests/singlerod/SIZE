@@ -88,6 +88,12 @@ C
      $,NX3,NY3,NZ3,NDIM,NFIELD,NPERT,NID
      $,NXD,NYD,NZD
 
+      parameter(nx1=lx1,ny1=ly1,nz1=lz1)
+      parameter(nx2=lx2,ny2=ly2,nz2=lz2)
+      parameter(nx3=lx3,ny3=ly3,nz3=lz3)
+      parameter(nxd=lxd,nyd=lyd,nzd=lzd)
+      parameter(ndim=ldim)
+
 c automatically added by makenek
       parameter(lxo   = lx1) ! max output grid size (lxo>=lx1)
 

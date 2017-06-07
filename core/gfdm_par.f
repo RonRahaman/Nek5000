@@ -57,7 +57,7 @@ c-----------------------------------------------------------------------
             write(6,*) 'gfdm_array_check fail A:',lelg_sm,ltfdm2,lelg
             write(6,*) 'modify lelg_sm,ltfdm2 in ZPER; makenek clean'
          endif
-         nz1 = 1/(nx1-ny1)
+c        nz1 = 1/(nx1-ny1)
          call exitt
       endif
 
