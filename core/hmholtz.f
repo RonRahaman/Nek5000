@@ -1,74 +1,4 @@
 c=======================================================================
-      subroutine hmholtz_acc
-     $                   (name,u,rhs,h1,h2,mask,mult,imsh,tli,maxit,isd)
-      include 'SIZE'
-      include 'TOTAL'
-      include 'FDMH1'
-      include 'CTIMER'
-
-      CHARACTER      NAME*4
-      REAL           U    (LX1,LY1,LZ1,1)
-      REAL           RHS  (LX1,LY1,LZ1,1)
-      REAL           H1   (LX1,LY1,LZ1,1)
-      REAL           H2   (LX1,LY1,LZ1,1)
-      REAL           MASK (LX1,LY1,LZ1,1)
-      REAL           MULT (LX1,LY1,LZ1,1)
-
-      logical iffdm
-      character*3 nam3
-
-      tol = abs(tli)
-
-      if (icalld.eq.0) thmhz=0.0
-
-      iffdm = .false.
-c     iffdm = .true.
-      if (ifsplit) iffdm = .true.
-
-      if (icalld.eq.0.and.iffdm) call set_fdm_prec_h1A
-
-      icalld=icalld+1
-      nhmhz=icalld
-      etime1=dnekclock()
-
-      ntot = nx1*ny1*nz1*nelfld(ifield)
-      if (imsh.eq.1) ntot = nx1*ny1*nz1*nelv
-      if (imsh.eq.2) ntot = nx1*ny1*nz1*nelt
-
-
-C     Determine which field is being computed for FDM based preconditioner bc's
-c
-      call chcopy(nam3,name,3)
-c
-                          kfldfdm = -1
-c     if (nam3.eq.'TEM' ) kfldfdm =  0
-c     if (name.eq.'TEM1') kfldfdm =  0  ! hardcode for temp only, for mpaul
-c     if (name.eq.'VELX') kfldfdm =  1
-c     if (name.eq.'VELY') kfldfdm =  2
-c     if (name.eq.'VELZ') kfldfdm =  3
-      if (name.eq.'PRES') kfldfdm =  ndim+1
-c     if (.not.iffdm) kfldfdm=-1
-C
-      call dssum   (rhs,nx1,ny1,nz1)
-      call col2    (rhs,mask,ntot)
-c      if (nio.eq.0.and.istep.le.10)
-c     $    write(6,*) param(22),' p22 ',istep,imsh
-      if (param(22).eq.0.or.istep.le.10)
-     $    call chktcg1 (tol,rhs,h1,h2,mask,mult,imsh,isd)
-
-      if (tli.lt.0) tol=tli ! caller-specified relative tolerance
-
-      if (imsh.eq.1) call cggo_acc
-     $   (u,rhs,h1,h2,mask,mult,imsh,tol,maxit,isd,binvm1,name)
-      if (imsh.eq.2) call cggo_acc
-     $   (u,rhs,h1,h2,mask,mult,imsh,tol,maxit,isd,bintm1,name)
-
-
-      thmhz=thmhz+(dnekclock()-etime1)
-      return
-      END
-C
-c=======================================================================
       subroutine cggo_acc
      $                (x,f,h1,h2,mask,mult,imsh,tin,maxit,isd,binv,name)
 C-----------------------------------------------------------------------
@@ -92,8 +22,9 @@ C-----------------------------------------------------------------------
  
       real x(1),f(1),h1(1),h2(1),mask(1),mult(1),binv(1)
       parameter        (lg=lx1*ly1*lz1*lelt)
-      COMMON /SCRCG/ d (lg) , scalar(2)
-      common /SCRMG/ r (lg) , w (lg) , p (lg) , z (lg)
+      common /scrcg/ d (lg)
+      common /scrmg/ r (lg) , w (lg) , p (lg) , z (lg)
+      real scalar(2)
  
       parameter (maxcg=900)
       common /tdarray/ diagt(maxcg),upper(maxcg)
@@ -102,9 +33,11 @@ C-----------------------------------------------------------------------
  
 c **  zero out stuff for Lanczos eigenvalue estimator
 
-!$ACC DATA CREATE (diagt,upper)
-      call rzero(diagt,maxcg)
-      call rzero(upper,maxcg)
+!$acc data create (diagt,upper) present(d,r,w,p,z)
+
+      call rzero_acc(diagt,maxcg)
+      call rzero_acc(upper,maxcg)
+
       rho = 0.00
 C
       NXYZ   = NX1*NY1*NZ1
@@ -145,7 +78,7 @@ c     D is not on GPU at this point yet
 
       fmax = glamax_acc(f,n)
 
-      if (fmax.eq.0.0) return
+      if (fmax.eq.0.0) goto 10000
 
 c     Check for non-trivial null-space
 
@@ -240,7 +173,8 @@ c
       niterhm = niter
       ifsolv = .false.
  
-!$ACC END DATA
+10000 continue
+!$acc end data
 
       return
       end

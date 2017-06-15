@@ -1020,8 +1020,7 @@ c
       return
       end
 c-----------------------------------------------------------------------
-      subroutine ophinv_pr_acc(o1,o2,o3,i1,i2,i3,h1,h2,tolh,nmxhi)
-c   not used.  use ophinvpr instead
+      subroutine ophinv_pr_acc(o1,o2,o3,i1,i2,i3,h1,h2,tol,maxit)
 C
 C     Ok = (H1*A+H2*B)-1 * Ik  (implicit)
 C
@@ -1037,55 +1036,28 @@ C
       real i1 (lx1,ly1,lz1,1) , i2 (lx1,ly1,lz1,1) , i3 (lx1,ly1,lz1,1)
       real h1 (lx1,ly1,lz1,1) , h2 (lx1,ly1,lz1,1)
 
-      ifproj = .false.
-      if (param(94).gt.0) ifproj = .true.
 
-      if (.not.ifproj) then
-         if (ifield.eq.1) call ophinv
-     $      (o1,o2,o3,i1,i2,i3,h1,h2,tolh,nmxhi)
-         if (ifield.eq.ifldmhd) call ophinv
-     $      (o1,o2,o3,i1,i2,i3,h1,h2,tolh,nmxhi)
-         return
-      endif
+      n = nx1*ny1*nz1*nelt
+      call chck('hi1')
+      call col2_acc (i1,v1mask,n) 
+      call col2_acc (i2,v2mask,n)
+      call col2_acc (i3,v3mask,n)
 
-      mtmp        = param(93)
-      do i=1,2*ndim
-         ivproj(1,i) = min(mxprev,mtmp) - 1
-      enddo
+      call opdssum  (i1,i2,i3)
 
-      imesh = 1
+      imsh = 1
 
-      if (ifstrs) then
-         matmod = 0
-         call hmhzsf  ('nomg',o1,o2,o3,i1,i2,i3,h1,h2,
-     $                  v1mask,v2mask,v3mask,vmult,
-     $                  tolh,nmxhi,matmod)
-      else
-         if (ifield.eq.1) then
-            call hsolve ('velx',o1,i1,h1,h2,v1mask,vmult
-     $                         ,imesh,tolh,nmxhi,1
-     $                         ,vproj(1,1),ivproj(1,1),binvm1)
-            call hsolve ('vely',o2,i2,h1,h2,v2mask,vmult
-     $                         ,imesh,tolh,nmxhi,2
-     $                         ,vproj(1,2),ivproj(1,2),binvm1)
-            if (if3d)
-     $      call hsolve ('velz',o3,i3,h1,h2,v3mask,vmult
-     $                         ,imesh,tolh,nmxhi,3
-     $                         ,vproj(1,3),ivproj(1,3),binvm1)
-         else  ! B-field
-            call hsolve (' Bx ',o1,i1,h1,h2,b1mask,vmult
-     $                         ,imesh,tolh,nmxhi,1
-     $                         ,vproj(1,4),ivproj(1,4),binvm1)
-            call hsolve (' By ',o2,i2,h1,h2,b2mask,vmult
-     $                         ,imesh,tolh,nmxhi,2
-     $                         ,vproj(1,5),ivproj(1,5),binvm1)
-            if (if3d)
-     $      call hsolve (' Bz ',o3,i3,h1,h2,b3mask,vmult
-     $                         ,imesh,tolh,nmxhi,3
-     $                         ,vproj(1,6),ivproj(1,6),binvm1)
-         endif
-      endif
-C
+      call chck('hi2')
+      call cggo_acc
+     $   (o1,i1,h1,h2,v1mask,vmult,imsh,tol,maxit,1,binvm1,'oph1')
+
+      call chck('hi3')
+
+      call cggo_acc
+     $   (o2,i2,h1,h2,v3mask,vmult,imsh,tol,maxit,2,binvm1,'oph1')
+      call cggo_acc
+     $   (o2,i2,h1,h2,v3mask,vmult,imsh,tol,maxit,3,binvm1,'oph1')
+
       return
       end
 c-----------------------------------------------------------------------

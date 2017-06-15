@@ -15,6 +15,9 @@ c
      $              , si2,si3,sigma
      $              , turbk,turbe
      $              , ps
+      common /nekusv/ ub(lx1,ly1,lz1,lelt)
+     $              , vb(lx1,ly1,lz1,lelt)
+     $              , wb(lx1,ly1,lz1,lelt)
 
       character*3     cbu
       common /nekusc/ cbu
