@@ -2188,12 +2188,22 @@ c-----------------------------------------------------------------------
       end
 c-----------------------------------------------------------------------
       subroutine chsign_acc(a,n)
-      real a(1)
-!$acc parallel loop present(a)
-      do 100 i=1,n
+      real a(n)
+!$ACC PARALLEL LOOP PRESENT(a)
+      do i=1,n
          a(i) = -a(i)
- 100  continue
-!$acc end loop
+      enddo
+!$ACC END PARALLEL
       return
       end
+c-----------------------------------------------------------------------
+      subroutine sub3_acc(a,b,c,n)
+      real a(n),b(n),c(n)
+!$ACC PARALLEL LOOP PRESENT(A,B,C)
+      do i=1,n
+         a(i)=b(i)-c(i)
+      enddo
+!$ACC END PARALLEL
+      return
+      END
 c-----------------------------------------------------------------------

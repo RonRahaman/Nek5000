@@ -4,13 +4,15 @@ c-----------------------------------------------------------------------
       include 'SIZE'
       include 'TOTAL'    
       include 'GMRES'
+      include 'HSMG'
 
       parameter (lt=lx1*ly1*lz1*lelt)
       parameter (lwk=(lx1+2)*(ly1+2)*(lz1+2))
       common /hsmgw/ work(0:lwk-1),work2(0:lwk-1)
 
-      real mg1(lt),mg2(lt),mg3(lt),mg4(lt)
+      real mg1(lt),mg2(lt),mg3(lt),mg4(lt),m2a(2*lt)
       common /scrmg/ mg1,mg2,mg3,mg4
+      common /scrm2/ m2a
 
       real cg1(lt),cg2(lt),cg3(lt),cg4(lt)
       common /scrcg/ cg1,cg2,cg3,cg4
@@ -21,9 +23,11 @@ c-----------------------------------------------------------------------
 
       if (icalld.eq.0) then ! ONE TIME ONLY
         icalld=1
+!$acc   enter data copyin (param)
 !$acc   enter data copyin (ibc_acc)
 !$acc   enter data copyin (cg1,cg2,cg3,cg4)
 !$acc   enter data copyin (mg1,mg2,mg3,mg4)
+!$acc   enter data copyin (m2a)
 !$acc   enter data copyin (v1mask,v2mask,v3mask,pmask,tmask,omask)
 !$acc   enter data copyin (pmult,tmult,vmult)
 !$acc   enter data copyin (dxm1,dxtm1,w3m1)
@@ -43,12 +47,11 @@ c-----------------------------------------------------------------------
 !$acc&    ,bfx,bfy,bfz
 !$acc&    ,bq,pr,prlag,qtl,usrdiv)
 
-
 !$acc   enter data copyin (mg_mask,mg_imask,pmask)
 !$acc   enter data copyin (mg_jht,mg_jh,mg_rstr_wt,mg_schwarz_wt)
 !$acc   enter data copyin (mg_work,mg_fast_s,mg_fast_d)
 !$acc   enter data copyin (h_gmres,w_gmres,v_gmres,z_gmres)
-!$acc   enter data copyin (c_gmres,s_gmres,x_gmres,gamma_gmres)
+!$acc   enter data copyin (c_gmres,s_gmres,x_gmres,gamma_gmres,wk_gmres)
 !$acc   enter data copyin (r_gmres)
 !$acc   enter data copyin (ml_gmres,mu_gmres)
 
@@ -358,8 +361,12 @@ C----------------------------------------------------------------------
       call nekuf       (bfx,bfy,bfz)
 
 !$acc update device    (bfx,bfy,bfz)
-      call oprzero_acc (bfx,bfy,bfz)
       call opcolv_acc  (bfx,bfy,bfz,bm1)
+
+      call chk2('bfx',bfx)
+      call chk2('bfy',bfy)
+      call chk2('bfz',bfz)
+
       time = time+dt
 
       return
@@ -1248,7 +1255,6 @@ c     GMRES iteration.
       parameter (lt=lx1*ly1*lz1*lelv)
       real res(lt),h1(lt),h2(lt),wt(lt)
 
-      real wk1(lgmres)
       real alpha, l, temp, temp_ptr1(1), temp_ptr2(1)
       integer outer
 
@@ -1285,16 +1291,16 @@ c     GMRES iteration.
       do while (iconv.eq.0.and.iter.lt.500)
          outer = outer+1
 
-         if(iter.eq.0) then                           !      -1
+         if(iter.eq.0) then
             call copy_acc   (r_gmres,res,n)          ! r = res
          else !update residual
-            call copy_acc  (r_gmres,res,n)               ! r = res
             call ax        (w_gmres,x_gmres,h1,h2,n)     ! w = A x
-            call add2s2_acc(r_gmres,w_gmres,-1.,n)       ! r = r - w
+            call sub3_acc  (r_gmres,res,w_gmres,n)       ! r = r - w
          endif
-
-         gamma_gmres(1) = sqrt(glsc3_acc(r_gmres,r_gmres,wt,n)) ! gamma  = \/ (r,r)
-         temp = gamma_gmres(1)
+c ROR: 2017-06-20: glsc3_acc will be inlined to fix some errors. Later,
+c glsc3_acc will be updated to work correctly.
+         temp = sqrt(glsc3_acc(r_gmres,r_gmres,wt,n)) ! gamma  = \/ (r,r)
+         gamma_gmres(1) = temp
          if(iter.eq.0) then
             div0 = temp*norm_fac
             if (param(21).lt.0) tolpss=abs(param(21))*div0
@@ -1310,11 +1316,13 @@ c     GMRES iteration.
             etime2 = dnekclock()
 c . . . . . Overlapping Schwarz + coarse-grid . . . . . . .
             call h1mg_solve(z_gmres(1,j),v_gmres(1,j),if_hyb) ! z  = M  v
-            call ortho     (z_gmres(1,j)) ! Orthogonalize wrt null space, if present
+            call ortho_acc (z_gmres(1,j)) ! Orthogonalize wrt null space, if present
             etime_p = etime_p + dnekclock()-etime2
 
             call ax  (w_gmres,z_gmres(1,j),h1,h2,n) ! w = A z
-
+c ROR: 2017-06-20: We've inlined glsc3_acc() because of some bugs in
+c that function.  We'd eventually like to fixe glsc3_acc and use it
+c here.  
             do i=1,j 
                temp = 0.0
                do k=1,n
@@ -1323,12 +1331,14 @@ c . . . . . Overlapping Schwarz + coarse-grid . . . . . . .
                h_gmres(i,j) = temp
             enddo
 
-            call gop_acc(h_gmres(1,j),wk1,'+  ',j)
+            call gop_acc(h_gmres(1,j),wk_gmres,'+  ',j)
 
             do i=1,j
+!$acc          parallel loop 
                do k=1,n
                   w_gmres(k) = w_gmres(k) - h_gmres(i,j) * v_gmres(k,i)
                enddo
+!$acc          end loop
             enddo
 
             do i=1,j-1                  ! Apply Givens rotations to new column
@@ -1365,6 +1375,7 @@ c . . . . . Overlapping Schwarz + coarse-grid . . . . . . .
             call cmult2_acc(v_gmres(1,j+1),w_gmres,temp,n) ! v    = w / alpha
 
          enddo
+
   900    iconv = 1
  1000    continue
          !back substitution
