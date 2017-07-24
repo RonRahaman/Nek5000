@@ -73,6 +73,8 @@ C        first, compute pressure
          call invers2  (h1,vtrans,ntot1)
          call rzero    (h2,ntot1)
          call ctolspl  (tolspl,respr)
+         call print_acc(h1,3,'h1  ',1)
+         call print_acc(h2,3,'h2  ',1)
          napproxp(1) = laxtp
          call hsolve   ('PRES',dpr,respr,h1,h2 
      $                        ,pmask,vmult
