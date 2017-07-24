@@ -1414,3 +1414,16 @@ c        parallelism.
       return
       end
 c-----------------------------------------------------------------------
+      subroutine chk3(s3,a)
+      include 'SIZE'
+      character*3 s3
+      parameter (lt=lx1*ly1*lz1*lelt)
+      real a(lt)
+
+      n=nx1*ny1*nz1*nelt
+      amx=glamax(a,n)
+      write(6,*) 'check2: ',s3,amx
+
+      return
+      end
+c-----------------------------------------------------------------------

@@ -1639,6 +1639,9 @@ C
       TIME = TIME-DT
       CALL NEKUF   (BFX,BFY,BFZ)
       CALL OPCOLV (BFX,BFY,BFZ,BM1)
+      call chk3('bfx',bfx)
+      call chk3('bfy',bfy)
+      call chk3('bfz',bfz)
       TIME = TIME+DT
 C
       return
