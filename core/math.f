@@ -1928,7 +1928,7 @@ c-----------------------------------------------------------------------
       end
 c-----------------------------------------------------------------------
       subroutine add2s2_acc(a,b,c1,n)
-      real a(1),b(1)
+      real a(n),b(n)
 !$ACC PARALLEL LOOP PRESENT(a,b)
       do i=1,n
         a(i)=a(i)+c1*b(i)
@@ -2146,7 +2146,7 @@ c-----------------------------------------------------------------------
       subroutine add2s1_acc(a,b,c1,n)
       real a(n),b(n),c1     
   
-!$ACC PARALLEL LOOP PRESENT(a,b,c1)
+!$ACC PARALLEL LOOP PRESENT(a,b)
       do i=1,n
         a(i)=c1*a(i)+b(i)
       enddo    
@@ -2179,7 +2179,7 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine add3s2_acc(a,b,c,c1,c2,n)
       real a(n),b(n),c(n)
-!$ACC PARALLEL LOOP PRESENT(a,b)
+!$ACC PARALLEL LOOP PRESENT(a,b,c)
       do i=1,n
         a(i)=c1*b(i)+c2*c(i)
       enddo
@@ -2208,3 +2208,12 @@ c-----------------------------------------------------------------------
       return
       END
 c-----------------------------------------------------------------------
+      subroutine cfill_acc(a,b,n)
+      DIMENSION  A(n)
+!$ACC PARALLEL LOOP PRESENT(a)
+      DO I = 1, N
+         A(I) = B
+      END DO
+!$ACC END PARALLEL
+      return
+      END

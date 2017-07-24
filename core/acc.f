@@ -5,6 +5,8 @@ c-----------------------------------------------------------------------
       include 'TOTAL'    
       include 'GMRES'
       include 'HSMG'
+c      include 'TSTEP'
+c      include 'SOLN'
 
       parameter (lt=lx1*ly1*lz1*lelt)
       parameter (lwk=(lx1+2)*(ly1+2)*(lz1+2))
@@ -16,6 +18,15 @@ c-----------------------------------------------------------------------
 
       real cg1(lt),cg2(lt),cg3(lt),cg4(lt)
       common /scrcg/ cg1,cg2,cg3,cg4
+
+      real TA1 (lx1*ly1*lz1*lelv), 
+     $   TA2 (lx1*ly1*lz1*lelt), 
+     $   TA3 (lx1*ly1*lz1*lelt),
+     $   TB1 (lx1*ly1*lz1*lelt),
+     $   TB2 (lx1*ly1*lz1*lelt),
+     $   TB3 (lx1*ly1*lz1*lelt),
+     $   H2  (lx1*ly1*lz1*lelt)
+      COMMON /SCRNS/ TA1, TA2, TA3, TB1, TB2, TB3, H2
 
       integer icalld
       save    icalld
@@ -31,7 +42,7 @@ c-----------------------------------------------------------------------
 !$acc   enter data copyin (v1mask,v2mask,v3mask,pmask,tmask,omask)
 !$acc   enter data copyin (pmult,tmult,vmult)
 !$acc   enter data copyin (dxm1,dxtm1,w3m1)
-!$acc   enter data copyin (bm1,binvm1,bintm1)
+!$acc   enter data copyin (bm1,binvm1,bintm1,bm1lag)
 !$acc   enter data copyin (jacm1,jacmi)
 !$acc   enter data copyin (xm1,ym1,zm1)
 !$acc   enter data copyin (unx,uny,unz,area)
@@ -54,6 +65,9 @@ c-----------------------------------------------------------------------
 !$acc   enter data copyin (c_gmres,s_gmres,x_gmres,gamma_gmres,wk_gmres)
 !$acc   enter data copyin (r_gmres)
 !$acc   enter data copyin (ml_gmres,mu_gmres)
+!$acc   enter data copyin (ta1,ta2,ta3,tb1,tb2,tb3,h2)
+!$acc   enter data copyin (abx1,abx2,aby1,aby2,abz1,abz2)
+!$acc   enter data copyin (bd)
 
       endif
 
@@ -70,13 +84,14 @@ c-----------------------------------------------------------------------
       character*4 text
 
 !$ACC update host(a) if (mode.eq.1)  !copies the data from device to host
-c     if (nid.eq.0) write(6,*) text,(a(i),i=300,n) ! prints data on host
       if (nid.eq.0) then
-         do i=1,n
-            write(6,10) text,i,a(i)
-         enddo
- 10      format(a4,i300,1p1e15.4)
+!         do i=1,n
+!            write(6,10) text,i,a(i)
+!         enddo
+! 10      format(a4,i300,1p1e15.4)
+          write(6,102) text, (a(i), i=1,4)
       endif
+  102    format(a4,2x,1p4e15.4)
 
       return
       end
@@ -267,40 +282,47 @@ C
       include 'INPUT'
       include 'TSTEP'
 C
-      COMMON /SCRNS/ TA1(LX1,LY1,LZ1,LELV)
-     $ ,             TA2(LX1,LY1,LZ1,LELV)
-     $ ,             TA3(LX1,LY1,LZ1,LELV)
-     $ ,             TB1(LX1,LY1,LZ1,LELV)
-     $ ,             TB2(LX1,LY1,LZ1,LELV)
-     $ ,             TB3(LX1,LY1,LZ1,LELV)
-     $ ,             H2 (LX1,LY1,LZ1,LELV)
+      COMMON /SCRNS/ TA1(LX1*LY1*LZ1*LELV)
+     $ ,             TA2(LX1*LY1*LZ1*LELV)
+     $ ,             TA3(LX1*LY1*LZ1*LELV)
+     $ ,             TB1(LX1*LY1*LZ1*LELV)
+     $ ,             TB2(LX1*LY1*LZ1*LELV)
+     $ ,             TB3(LX1*LY1*LZ1*LELV)
+     $ ,             H2 (LX1*LY1*LZ1*LELV)
 C
       NTOT1 = NX1*NY1*NZ1*NELV
       CONST = 1./DT
 
       if(iflomach) then
-        call cfill(h2,CONST,ntot1)
+        call cfill_acc(h2,CONST,ntot1)
       else
-        call cmult2(h2,vtrans(1,1,1,1,ifield),const,ntot1)
+        call cmult2_acc(h2,vtrans(1,1,1,1,ifield),const,ntot1)
       endif
 
-      CALL OPCOLV3c (TB1,TB2,TB3,VX,VY,VZ,BM1,bd(2))
+      call chck('mma')
+      CALL opcolv3c_acc (TB1,TB2,TB3,VX,VY,VZ,BM1,bd(2))
+      call chck('mmb')
 C
       DO 100 ILAG=2,NBD
+         call chck('mmc')
          IF (IFGEOM) THEN
-            CALL OPCOLV3c(TA1,TA2,TA3,VXLAG (1,1,1,1,ILAG-1),
+            CALL opcolv3c_acc(TA1,TA2,TA3,VXLAG (1,1,1,1,ILAG-1),
      $                                VYLAG (1,1,1,1,ILAG-1),
      $                                VZLAG (1,1,1,1,ILAG-1),
      $                                BM1LAG(1,1,1,1,ILAG-1),bd(ilag+1))
          ELSE
-            CALL OPCOLV3c(TA1,TA2,TA3,VXLAG (1,1,1,1,ILAG-1),
+            CALL opcolv3c_acc(TA1,TA2,TA3,VXLAG (1,1,1,1,ILAG-1),
      $                                VYLAG (1,1,1,1,ILAG-1),
      $                                VZLAG (1,1,1,1,ILAG-1),
      $                                BM1                   ,bd(ilag+1))
          ENDIF
-         CALL OPADD2  (TB1,TB2,TB3,TA1,TA2,TA3)
+         call chck('mmd')
+         CALL OPADD2_ACC  (TB1,TB2,TB3,TA1,TA2,TA3)
+         call chck('mme')
  100  CONTINUE
-      CALL OPADD2col (BFX,BFY,BFZ,TB1,TB2,TB3,h2)
+      call chck('mmf')
+      CALL opadd2col_acc (BFX,BFY,BFZ,TB1,TB2,TB3,h2)
+      call chck('mmg')
 C
       return
       END
@@ -316,30 +338,30 @@ C-----------------------------------------------------------------------
       include 'SOLN'
       include 'TSTEP'
 C
-      COMMON /SCRUZ/ TA1 (LX1,LY1,LZ1,LELV)
-     $ ,             TA2 (LX1,LY1,LZ1,LELV)
-     $ ,             TA3 (LX1,LY1,LZ1,LELV)
+      COMMON /SCRNS/ TA1 (LX1*LY1*LZ1*LELT)
+     $ ,             TA2 (LX1*LY1*LZ1*LELT)
+     $ ,             TA3 (LX1*LY1*LZ1*LELT)
 C
-      NTOT1 = NX1*NY1*NZ1*NELV
+      NTOT1 = LX1*LY1*LZ1*LELT
 C
       AB0 = AB(1)
       AB1 = AB(2)
       AB2 = AB(3)
-      CALL ADD3S2 (TA1,ABX1,ABX2,AB1,AB2,NTOT1)
-      CALL ADD3S2 (TA2,ABY1,ABY2,AB1,AB2,NTOT1)
-      CALL COPY   (ABX2,ABX1,NTOT1)
-      CALL COPY   (ABY2,ABY1,NTOT1)
-      CALL COPY   (ABX1,BFX,NTOT1)
-      CALL COPY   (ABY1,BFY,NTOT1)
-      CALL ADD2S1 (BFX,TA1,AB0,NTOT1)
-      CALL ADD2S1 (BFY,TA2,AB0,NTOT1)
-      CALL ADD3S2 (TA3,ABZ1,ABZ2,AB1,AB2,NTOT1)
-      CALL COPY   (ABZ2,ABZ1,NTOT1)
-      CALL COPY   (ABZ1,BFZ,NTOT1)
-      CALL ADD2S1 (BFZ,TA3,AB0,NTOT1)
-      if(.not.iflomach) CALL COL2 (BFX,VTRANS,NTOT1) ! multiply by density
-      if(.not.iflomach) CALL COL2 (BFY,VTRANS,NTOT1)
-      if(.not.iflomach) CALL COL2 (BFZ,VTRANS,NTOT1)
+      CALL ADD3S2_ACC (TA1,ABX1,ABX2,AB1,AB2,NTOT1)
+      CALL ADD3S2_ACC (TA2,ABY1,ABY2,AB1,AB2,NTOT1)
+      CALL COPY_ACC   (ABX2,ABX1,NTOT1)
+      CALL COPY_ACC   (ABY2,ABY1,NTOT1)
+      CALL COPY_ACC   (ABX1,BFX,NTOT1)
+      CALL COPY_ACC   (ABY1,BFY,NTOT1)
+      CALL ADD2S1_ACC (BFX,TA1,AB0,NTOT1)
+      CALL ADD2S1_ACC (BFY,TA2,AB0,NTOT1)
+      CALL ADD3S2_ACC (TA3,ABZ1,ABZ2,AB1,AB2,NTOT1)
+      CALL COPY_ACC   (ABZ2,ABZ1,NTOT1)
+      CALL COPY_ACC   (ABZ1,BFZ,NTOT1)
+      CALL ADD2S1_ACC (BFZ,TA3,AB0,NTOT1)
+      if(.not.iflomach) CALL COL2_ACC (BFX,VTRANS,NTOT1) ! multiply by density
+      if(.not.iflomach) CALL COL2_ACC (BFY,VTRANS,NTOT1)
+      if(.not.iflomach) CALL COL2_ACC (BFZ,VTRANS,NTOT1)
 C
       return
       END
@@ -643,9 +665,13 @@ c           by userqtl.
          call plan4_acc_data_copyin()
          call chck('baa')
          call makef_acc     ! explicit contributions bfx,bfy,bfz 
-         call chk2('caa',bfx)
-         call chk2('ca2',bfy)
-         call chk2('ca3',bfz)
+         call chck('caa')
+         call print_acc(bfx,3,'bfx ',1)
+         call print_acc(bfy,3,'bfy ',1)
+         call print_acc(bfz,3,'bfz ',1)
+         !call chk2('caa',bfx)
+         !call chk2('ca2',bfy)
+         !call chk2('ca3',bfz)
          call sumab_vx_acc  ! Extrapolate velocity
          call chck('daa')
 
@@ -668,14 +694,17 @@ c           by userqtl.
          call chck('kaa')
          call ctolspl_acc  (tolspl,respr)
          call chck('laa')
-         call chk2('h1x',h1)
-         call chk2('h2x',h2)
+         call print_acc(h1,3,'h1  ',1)
+         call print_acc(h2,3,'h2  ',1)
+         !call chk2('h1x',h1)
+         !call chk2('h2x',h2)
 
          call chck('maa')
          etime1=dnekclock()
          call chck('naa')
          call copy_acc     (dpr,respr,n)
-         call chk2('oaa',respr)
+         call print_acc(respr,3,'res ',1)
+         !call chk2('oaa',respr)
 
          call hmh_gmres_acc(dpr,h1,h2,vmult,nmxh)   ! compute pressure
 
@@ -1298,8 +1327,35 @@ c     GMRES iteration.
             call sub3_acc  (r_gmres,res,w_gmres,n)       ! r = r - w
          endif
 
-         temp = sqrt(glsc3_acc(r_gmres,r_gmres,wt,n)) ! gamma  = \/ (r,r)
-         gamma_gmres(1) = temp
+
+
+c        ROR: 2017-06-03: I inlined glsc3_acc because I couldn't figure
+c        out how to call glsc3_acc from inside a kernel.  I kept getting
+c        the error: "Unsupported nested compute construct in compute
+c        construct or acc routine"
+c        temp = sqrt(glsc3_acc(r_gmres,r_gmres,wt,n)) ! gamma  = \/ (r,r)
+
+!$ACC DATA COPYOUT(temp_ptr1) CREATE(temp_ptr2)
+
+!$ACC KERNELS PRESENT(r_gmres,wt)
+         temp = 0.0
+         do  k=1,n
+           temp = temp + r_gmres(k)*r_gmres(k)*wt(k)
+         enddo
+         temp_ptr1(1) = temp
+!$ACC END KERNELS
+
+         call gop_acc(temp_ptr1,temp_ptr2,'+  ',1)
+
+!$ACC KERNELS
+         gamma_gmres(1) = sqrt(temp_ptr1(1))
+!$ACC END KERNELS
+
+!$ACC END DATA
+
+         temp = sqrt(temp_ptr1(1))
+         gamma_gmres(1) = sqrt(temp_ptr1(1))
+
          if(iter.eq.0) then
             div0 = temp*norm_fac
             if (param(21).lt.0) tolpss=abs(param(21))*div0
@@ -1427,3 +1483,79 @@ c-----------------------------------------------------------------------
       return
       end
 c-----------------------------------------------------------------------
+      subroutine opcolv3c_acc(a1,a2,a3,b1,b2,b3,c,d)
+      include 'SIZE'
+      REAL A1(LX1*LY1*LZ1*LELT),
+     $     A2(LX1*LY1*LZ1*LELT),
+     $     A3(LX1*LY1*LZ1*LELT),
+     $     B1(LX1*LY1*LZ1*LELT),
+     $     B2(LX1*LY1*LZ1*LELT),
+     $     B3(LX1*LY1*LZ1*LELT),
+     $     C (LX1*LY1*LZ1*LELT)
+
+      NTOT1=LX1*LY1*LZ1*LELT
+
+      IF (LDIM.EQ.3) THEN
+!$ACC PARALLEL LOOP PRESENT(a1,a2,a3,b1,b2,b3,c)
+         DO I=1,NTOT1
+            A1(I)=B1(I)*C(I)*d
+            A2(I)=B2(I)*C(I)*d
+            A3(I)=B3(I)*C(I)*d
+         END DO
+!$ACC END PARALLEL
+      ELSE
+!$ACC PARALLEL LOOP PRESENT(a1,a2,b1,b2,c)
+         DO I=1,NTOT1
+            A1(I)=B1(I)*C(I)*d
+            A2(I)=B2(I)*C(I)*d
+         END DO
+!$ACC END PARALLEL
+      ENDIF
+      return
+      END
+c-----------------------------------------------------------------------
+      subroutine opadd2_acc (a1,a2,a3,b1,b2,b3)
+      include 'SIZE'
+      REAL A1(LX1*LY1*LZ1*LELV),
+     $     A2(LX1*LY1*LZ1*LELV),
+     $     A3(LX1*LY1*LZ1*LELV),
+     $     B1(LX1*LY1*LZ1*LELV),
+     $     B2(LX1*LY1*LZ1*LELV),
+     $     B3(LX1*LY1*LZ1*LELV)
+      NTOT1=LX1*LY1*LZ1*LELV
+      CALL ADD2_ACC(A1,B1,NTOT1)
+      CALL ADD2_ACC(A2,B2,NTOT1)
+      IF(LDIM.EQ.3)CALL ADD2_ACC(A3,B3,NTOT1)
+      return
+      END
+c-----------------------------------------------------------------------
+      subroutine opadd2col_acc(a1,a2,a3,b1,b2,b3,c)
+      include 'SIZE'
+      REAL A1(LX1*LY1*LZ1*LELT),
+     $     A2(LX1*LY1*LZ1*LELT),
+     $     A3(LX1*LY1*LZ1*LELT),
+     $     B1(LX1*LY1*LZ1*LELT),
+     $     B2(LX1*LY1*LZ1*LELT),
+     $     B3(LX1*LY1*LZ1*LELT),
+     $     C(LX1*LY1*LZ1*LELT)
+
+      NTOT1=LX1*LY1*LZ1*LELT
+
+      IF (LDIM.EQ.3) THEN
+!$ACC PARALLEL LOOP PRESENT(A1,A2,A3,B1,B2,B3,C)
+         DO I=1,NTOT1
+            A1(I)=A1(I)+b1(i)*c(i)
+            A2(I)=A2(I)+b2(i)*c(i)
+            A3(I)=A3(I)+b3(i)*c(i)
+         END DO
+!$ACC END PARALLEL
+      ELSE
+!$ACC PARALLEL LOOP PRESENT(A1,A2,B1,B2,C)
+         DO I=1,NTOT1
+            A1(I)=A1(I)+b1(i)*c(i)
+            A2(I)=A2(I)+b2(i)*c(i)
+         END DO
+!$ACC END PARALLEL
+      ENDIF
+      return
+      END
