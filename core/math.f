@@ -82,88 +82,29 @@ C
       END
 c-----------------------------------------------------------------------
       subroutine invcol1(a,n)
-      REAL A(1)
-C
-      include 'OPCTR'
-C
-#ifdef TIMER
-      if (isclld.eq.0) then
-          isclld=1
-          nrout=nrout+1
-          myrout=nrout
-          rname(myrout) = 'invcl1'
-      endif
-      isbcnt = n
-      dct(myrout) = dct(myrout) + (isbcnt)
-      ncall(myrout) = ncall(myrout) + 1
-      dcount      =      dcount + (isbcnt)
-#endif
-C
-      DO 100 I=1,N
-         A(I)=1./A(I)
- 100  CONTINUE
+      real a(1)
+
+      do 100 i=1,n
+         a(i)=1./a(i)
+ 100  continue
+
       return
-      END
+      end
 c-----------------------------------------------------------------------
       subroutine invcol2(a,b,n)
-C
-      REAL A(1),B(1)
-      include 'CTIMER'
-      include 'OPCTR'
-C
-#ifdef TIMER
-      if (icalld.eq.0) tinvc=0.0
-      icalld=icalld+1
-      ninvc=icalld
-      etime1=dnekclock()
-C
-C
-C
-      if (isclld.eq.0) then
-          isclld=1
-          nrout=nrout+1
-          myrout=nrout
-          rname(myrout) = 'invcl2'
-      endif
-      isbcnt = n
-      dct(myrout) = dct(myrout) + (isbcnt)
-      ncall(myrout) = ncall(myrout) + 1
-      dcount      =      dcount + (isbcnt)
-#endif
-C
-      DO 100 I=1,N
-         A(I)=A(I)/B(I)
- 100  CONTINUE
-#ifdef TIMER
-      tinvc=tinvc+(dnekclock()-etime1)
-#endif
+      real a(1),b(1)
+
+      do 100 i=1,n
+         a(i)=a(i)/b(i)
+ 100  continue
+
       return
-      END
+      end
 c-----------------------------------------------------------------------
       subroutine invcol3_acc(a,b,c,n)
       REAL A(n),B(n),C(n)
 C
       include 'OPCTR'
-      include 'CTIMER'
-
-#ifdef TIMER
-      if (icalld.eq.0) tinv3=0.0
-      icalld=icalld+1
-      ninv3=icalld
-      etime1=dnekclock()
-C
-C
-      if (isclld.eq.0) then
-          isclld=1
-          nrout=nrout+1
-          myrout=nrout
-          rname(myrout) = 'invcl3'
-      endif
-      isbcnt = n
-      dct(myrout) = dct(myrout) + (isbcnt)
-      ncall(myrout) = ncall(myrout) + 1
-      dcount      =      dcount + (isbcnt)
-#endif
  
 !$ACC PARALLEL LOOP PRESENT(a,b,c)
       DO 100 I=1,N
@@ -171,43 +112,18 @@ C
  100  CONTINUE
 !$ACC END PARALLEL
 
-#ifdef TIMER
-      tinv3=tinv3+(dnekclock()-etime1)
-#endif
       return
-      END
+      end
 c-----------------------------------------------------------------------
       subroutine invcol3(a,b,c,n)
       REAL A(1),B(1),C(1)
-C
-      include 'OPCTR'
-      include 'CTIMER'
 
-#ifdef TIMER
-      if (icalld.eq.0) tinv3=0.0
-      icalld=icalld+1
-      ninv3=icalld
-      etime1=dnekclock()
-C
-C
-      if (isclld.eq.0) then
-          isclld=1
-          nrout=nrout+1
-          myrout=nrout
-          rname(myrout) = 'invcl3'
-      endif
-      isbcnt = n
-      dct(myrout) = dct(myrout) + (isbcnt)
-      ncall(myrout) = ncall(myrout) + 1
-      dcount      =      dcount + (isbcnt)
-#endif
-C
+      include 'OPCTR'
+
       DO 100 I=1,N
          A(I)=B(I)/C(I)
  100  CONTINUE
-#ifdef TIMER
-      tinv3=tinv3+(dnekclock()-etime1)
-#endif
+
       return
       END
 c-----------------------------------------------------------------------
@@ -501,7 +417,6 @@ C
  100  CONTINUE
       return
       END
-C
 c-----------------------------------------------------------------------
       subroutine cmult(a,const,n)
       REAL A(1)
@@ -2272,6 +2187,13 @@ c-----------------------------------------------------------------------
       return
       end
 c-----------------------------------------------------------------------
-
-
-
+      subroutine chsign_acc(a,n)
+      real a(1)
+!$acc parallel loop present(a)
+      do 100 i=1,n
+         a(i) = -a(i)
+ 100  continue
+!$acc end loop
+      return
+      end
+c-----------------------------------------------------------------------

@@ -193,7 +193,15 @@ c
 c     if (ifldt.eq.0)       ifldt = 1
       if (ifldt.eq.ifldmhd) ifldt = 1
 
-      call gs_op_many(gsh_fld(ifldt),u,v,w,u,u,u,ndim,1,1,0)
+c
+c     WE NEED TO FIX THIS (pff, June 14, 2017)
+c
+c     call gs_op_many(gsh_fld(ifldt),u,v,w,u,u,u,ndim,1,1,0)
+
+      call gs_op(gsh_fld(ifldt),u,1,1,0)  ! 1 ==> +
+      call gs_op(gsh_fld(ifldt),v,1,1,0)  ! 1 ==> +
+      if (ldim.eq.3) call gs_op(gsh_fld(ifldt),w,1,1,0)  ! 1 ==> +
+
 
 #ifdef TIMER
       timee=(dnekclock()-etime1)

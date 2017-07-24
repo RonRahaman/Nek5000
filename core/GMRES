@@ -10,8 +10,9 @@ c
       real x_gmres(lx2*ly2*lz2*lelv), r_gmres(lx2*ly2*lz2*lelv)
      $   , w_gmres(lx2*ly2*lz2*lelv), h_gmres(lgmres,lgmres) 
      $   , gamma_gmres(lgmres+1), c_gmres(lgmres), s_gmres(lgmres)
+     $   , wk_gmres(lgmres)
       common /gmres/ x_gmres, r_gmres, w_gmres, h_gmres, 
-     $               gamma_gmres, c_gmres, s_gmres
+     $               gamma_gmres, c_gmres, s_gmres, wk_gmres
     
       real           v_gmres(lx2*ly2*lz2*lelv,lgmres)
       common /gmre1/ v_gmres

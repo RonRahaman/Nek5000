@@ -2313,16 +2313,14 @@ c     Assumes that preprocessing has been completed via h1mg_setup()
       common /scrvh/ h1    (lx1,ly1,lz1,lelv),
      $               h2    (lx1,ly1,lz1,lelv)
       parameter (lt=lx1*ly1*lz1*lelt)
-      common /scrmg/ e(2*lt),w(lt),r(lt)
+      common /scrmg/ w(lt),r(lt)
+      common /scrm2/ e(2*lt)
       integer p_msk,p_b
       logical if_hybrid
 
 
-c     if_hybrid = .true.    ! Control this from gmres, according
-c     if_hybrid = .false.   ! to convergence efficiency
-
       nel   = nelfld(ifield)
-      op    =  1.                                     ! Coefficients for h1mg_ax
+      op    =  1.                                   ! Coefficients for h1mg_ax
       om    = -1.
       sigma =  1.
       if (if_hybrid) sigma = 2./3.
