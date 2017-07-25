@@ -109,7 +109,9 @@ C
          scalar(1)=vlsc3_acc (z,r,mult,n)
          scalar(2)=vlsc32_acc(r,mult,binv,n)
 
+!$ACC DATA COPY(scalar)
          call gop_acc(scalar,w,'+  ',2)
+!$ACC END DATA
 
          rtz1=scalar(1)
          rbn2=sqrt(scalar(2)/vol)

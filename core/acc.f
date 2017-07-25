@@ -19,6 +19,9 @@ c      include 'SOLN'
       real cg1(lt),cg2(lt),cg3(lt),cg4(lt)
       common /scrcg/ cg1,cg2,cg3,cg4
 
+      common /ctmp0/ wk1   (lx1,ly1,lz1,lelt)
+     $             , wk2   (lx1,ly1,lz1,lelt)
+
       real TA1 (lx1*ly1*lz1*lelv), 
      $   TA2 (lx1*ly1*lz1*lelt), 
      $   TA3 (lx1*ly1*lz1*lelt),
@@ -68,6 +71,9 @@ c      include 'SOLN'
 !$acc   enter data copyin (ta1,ta2,ta3,tb1,tb2,tb3,h2)
 !$acc   enter data copyin (abx1,abx2,aby1,aby2,abz1,abz2)
 !$acc   enter data copyin (bd)
+
+!$ACC ENTER DATA CREATE(wk1,wk2)
+
 
       endif
 
@@ -1284,6 +1290,8 @@ c     GMRES iteration.
       parameter (lt=lx1*ly1*lz1*lelv)
       real res(lt),h1(lt),h2(lt),wt(lt)
 
+      common /ctmp0/   wk1(lgmres),wk2(lgmres)
+
       real alpha, l, temp, temp_ptr1(1), temp_ptr2(1)
       integer outer
 
@@ -1407,7 +1415,9 @@ c           ROR: 2017-07-25: Why aren't we calling col2_acc here?
 
 c           ROR: 2017-07-25: Different work array here.  fischer1's version
 c           used w_gmres, but the master branch uses wk1
+!$ACC DATA PRESENT(h_gmres, wk1)
             call gop_acc(h_gmres(1,j),wk1,'+  ',j)
+!$ACC END DATA
 
             do i=1,j
 !$ACC KERNELS PRESENT(w_gmres, h_gmres, v_gmres)
