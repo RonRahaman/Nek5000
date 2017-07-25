@@ -1303,10 +1303,20 @@ c     GMRES iteration.
       iter    = 0
       m       = lgmres
 
-      norm_fac = 1./sqrt(volvm1)
+c     ROR: 2017-07-25: Why aren't we calling uzawa_gmres_split here?
+c     norm_fac = 1./sqrt(volvm1)
+c     ROR: 2017-07-25: This should be moved outside the scope of the 
+c!$ACC ENTER DATA COPYIN(res,h1,h2)
+c     ROR 2017-07-25: fischer1 moved these copyins outside the scope of
+c     the subroutine.  TODO: debug this, if needed
+
+c      call hmh_gmres_acc_data_copyin()
+
+c!$ACC ENTER DATA COPYIN(res,h1,h2)
 
       acctime1 = dnekclock()
 
+c     ROR: 2017-07-25: Why aren't we calling chktcg1_acc here?
       tolps = abs(param(21))
       tolpss = tolps
 
@@ -1321,9 +1331,12 @@ c     GMRES iteration.
          outer = outer+1
 
          if(iter.eq.0) then
+c           ROR: 2017-07-25: Why aren't we calling col3_acc here?
             call copy_acc  (r_gmres,res,n)               ! r = res
          else !update residual
             call ax        (w_gmres,x_gmres,h1,h2,n)     ! w = A x
+c           ROR: 2017-07-25: Double check that this is equivalent to
+c           add2s_acc an col2_acc
             call sub3_acc  (r_gmres,res,w_gmres,n)       ! r = r - w
          endif
 
@@ -1335,7 +1348,7 @@ c        the error: "Unsupported nested compute construct in compute
 c        construct or acc routine"
 c        temp = sqrt(glsc3_acc(r_gmres,r_gmres,wt,n)) ! gamma  = \/ (r,r)
 
-!$ACC DATA COPYOUT(temp_ptr1) CREATE(temp_ptr2)
+!$ACC DATA CREATE(temp_ptr1,temp_ptr2)
 
 !$ACC KERNELS PRESENT(r_gmres,wt)
          temp = 0.0
@@ -1345,16 +1358,16 @@ c        temp = sqrt(glsc3_acc(r_gmres,r_gmres,wt,n)) ! gamma  = \/ (r,r)
          temp_ptr1(1) = temp
 !$ACC END KERNELS
 
-         call gop_acc(temp_ptr1,temp_ptr2,'+  ',1)
+      call gop_acc(temp_ptr1,temp_ptr2,'+  ',1)
 
 !$ACC KERNELS
-         gamma_gmres(1) = sqrt(temp_ptr1(1))
+      gamma_gmres(1) = sqrt(temp_ptr1(1))
 !$ACC END KERNELS
 
 !$ACC END DATA
 
-         temp = sqrt(temp_ptr1(1))
-         gamma_gmres(1) = sqrt(temp_ptr1(1))
+!$ACC UPDATE HOST(gamma_gmres(1))
+      temp = gamma_gmres(1)
 
          if(iter.eq.0) then
             div0 = temp*norm_fac
@@ -1368,41 +1381,59 @@ c        temp = sqrt(glsc3_acc(r_gmres,r_gmres,wt,n)) ! gamma  = \/ (r,r)
                                                    !  1            1
          do j=1,m
             iter = iter+1
+c           ROR: 2017-07-25: Why aren't we calling col3_acc here?
             etime2 = dnekclock()
 c . . . . . Overlapping Schwarz + coarse-grid . . . . . . .
+c           ROR: 2017-07-25: In master branch, h1mg_solve is being
+c           called with different arugments:
+c              call h1mg_solve(z_gmres(1,j),w_gmres,if_hyb) ! z  = M   w
+c           Is that okay?
             call h1mg_solve(z_gmres(1,j),v_gmres(1,j),if_hyb) ! z  = M  v
             call ortho_acc (z_gmres(1,j)) ! Orthogonalize wrt null space, if present
             etime_p = etime_p + dnekclock()-etime2
 
             call ax  (w_gmres,z_gmres(1,j),h1,h2,n) ! w = A z
 
+c           ROR: 2017-07-25: Why aren't we calling col2_acc here?
             do i=1,j 
-               temp = sqrt(glsc3_acc(w_gmres,v_gmres(k,i),wt,n))
+!$ACC KERNELS PRESENT(h_gmres, w_gmres, v_gmres, wt)
+               temp = 0.0
+               do k=1,n
+                  temp = temp + w_gmres(k) * v_gmres(k,i) *  wt(k)
+               enddo
                h_gmres(i,j) = temp
+!$ACC END KERNELS
             enddo
 
-            call gop_acc(h_gmres(1,j),wk_gmres,'+  ',j)
+c           ROR: 2017-07-25: Different work array here.  fischer1's version
+c           used w_gmres, but the master branch uses wk1
+            call gop_acc(h_gmres(1,j),wk1,'+  ',j)
 
             do i=1,j
-!$acc          parallel loop 
+!$ACC KERNELS PRESENT(w_gmres, h_gmres, v_gmres)
                do k=1,n
                   w_gmres(k) = w_gmres(k) - h_gmres(i,j) * v_gmres(k,i)
                enddo
-!$acc          end loop
+!$ACC END KERNELS
             enddo
 
-            do i=1,j-1                  ! Apply Givens rotations to new column
+! Apply Givens rotations to new column
+!$ACC KERNELS PRESENT(h_gmres,c_gmres,s_gmres)
+            do i=1,j-1
                temp = h_gmres(i,j)
                h_gmres(i  ,j)=  c_gmres(i)*temp
      $                        + s_gmres(i)*h_gmres(i+1,j)
                h_gmres(i+1,j)= -s_gmres(i)*temp
      $                        + c_gmres(i)*h_gmres(i+1,j)
             enddo
-                                                          !            ______
+!$ACC END KERNELS
+                                                      !            ______
             alpha = sqrt(glsc3_acc(w_gmres,w_gmres,wt,n)) ! alpha =  \/ (w,w)
             rnorm = 0.
             if(alpha.eq.0.) goto 900  !converged
 
+!$ACC    KERNELS
+!$ACC&   PRESENT(w_gmres, wt, h_gmres, c_gmres, s_gmres, gamma_gmres)
             l = sqrt(h_gmres(j,j)*h_gmres(j,j)+alpha*alpha)
             temp = 1./l
             c_gmres(j) = h_gmres(j,j) * temp
@@ -1413,6 +1444,7 @@ c . . . . . Overlapping Schwarz + coarse-grid . . . . . . .
 
             rnorm = abs(gamma_gmres(j+1))*norm_fac
             ratio = rnorm/div0
+!$ACC END KERNELS
 
             if (ifprint.and.nio.eq.0)
      $         write (6,66) iter,tolpss,rnorm,div0,ratio,istep
@@ -1432,6 +1464,7 @@ c . . . . . Overlapping Schwarz + coarse-grid . . . . . . .
          !     -1
          !c = H   gamma
 
+!$ACC KERNELS PRESENT(gamma_gmres, h_gmres, c_gmres)
          do k=j,1,-1
             temp = gamma_gmres(k)
             do i=j,k+1,-1
@@ -1439,17 +1472,21 @@ c . . . . . Overlapping Schwarz + coarse-grid . . . . . . .
             enddo
             c_gmres(k) = temp/h_gmres(k,k)
          enddo
+!$ACC END KERNELS
 
 c        Sum of Arnoldi vectors
 c
 c        ROR: 2016-06-13: For OpenACC, we inlined the call to
 c        add2s2() so the compiler could infer some nested
 c        parallelism.
+!$ACC KERNELS PRESENT(x_gmres, z_gmres, c_gmres)
          do i=1,j
          do k=1,n
             x_gmres(k) = x_gmres(k) + z_gmres(k,i)*c_gmres(i)
          enddo
          enddo                                                !          i,j  i
+!$ACC END KERNELS
+c        if(iconv.eq.1) call dbg_write(x,nx1,ny1,nz1,nelv,'esol',3)
       enddo
  9000 continue
 
@@ -1457,14 +1494,22 @@ c        parallelism.
 
       call copy_acc(res,x_gmres,n)
 
+c     ROR: 2017-07-25: Why aren't we calling ortho_acc here?      
       acctime1 = dnekclock()-acctime1
 
+c     ROR: 2017-07-25: fischer1 moved this copyout outside the scope of
+c     the subroutine, but that might not be correct.  TODO: debug this
+c     copyout
+c!$ACC EXIT DATA COPYOUT(h1,h2,res)
 
       etime1 = dnekclock()-etime1
       if (nio.eq.0) write(6,9999) istep,iter,divex,div0,tolpss,etime_p,
      &                            etime1,if_hyb
       if (nio.eq.0) write(6,*) 'acc_time: ', acctime1
  9999 format(4x,i7,'  PRES gmres ',4x,i5,1p5e13.4,1x,l4)
+c     ROR:  2017-07-25: fischer1 moved these copyouts outside the scope
+c     of the scope of the subroutine.  TODO: debug this
+c      call hmh_gmres_acc_data_copyout()
 
 
       return
