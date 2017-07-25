@@ -1312,7 +1312,7 @@ c     GMRES iteration.
       m       = lgmres
 
 c     ROR: 2017-07-25: Why aren't we calling uzawa_gmres_split here?
-c     norm_fac = 1./sqrt(volvm1)
+      norm_fac = 1./sqrt(volvm1)
 c     ROR: 2017-07-25: This should be moved outside the scope of the 
 c!$ACC ENTER DATA COPYIN(res,h1,h2)
 c     ROR 2017-07-25: fischer1 moved these copyins outside the scope of
