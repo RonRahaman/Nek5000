@@ -311,6 +311,244 @@ c     Solve the Helmholtz equation by right-preconditioned
 c     GMRES iteration.
 
 
+      include 'SIZE'
+      include 'TOTAL'
+      include 'FDMH1'
+      include 'GMRES'
+      common  /ctolpr/ divex
+      common  /cprint/ ifprint
+      logical          ifprint
+      real             res  (lx1*ly1*lz1*lelv)
+      real             h1   (lx1*ly1*lz1*lelv)
+      real             h2   (lx1*ly1*lz1*lelv)
+      real             wt   (lx1*ly1*lz1*lelv)
+
+      common /scrcg/ d(lx1*ly1*lz1*lelv),wk(lx1*ly1*lz1*lelv)
+
+      common /cgmres1/ y(lgmres)
+      common /ctmp0/   wk1(lgmres),wk2(lgmres)
+      real alpha, l, temp, temp_ptr1(1), temp_ptr2(1)
+      integer outer
+
+      logical iflag,if_hyb
+      save    iflag,if_hyb
+      data    iflag,if_hyb  /.false. , .false. /
+      real    norm_fac
+      save    norm_fac
+
+      real*8 etime1,acctime1,dnekclock
+
+      n = nx1*ny1*nz1*nelv
+
+      etime1 = dnekclock()
+      etime_p = 0.
+      divex = 0.
+      iter  = 0
+      m     = lgmres
+
+      if(.not.iflag) then
+         iflag=.true.
+         call uzawa_gmres_split(ml_gmres,mu_gmres,bm1,binvm1,
+     $                          nx1*ny1*nz1*nelv)
+         norm_fac = 1./sqrt(volvm1)
+      endif
+
+      if (param(100).ne.2) call set_fdm_prec_h1b(d,h1,h2,nelv)
+
+c     ROR 2017-05-22: Separate copyin/copyout statements are used for
+c     res, h1, h2, and wt, since they are local variables.  
+
+      call hmh_gmres_acc_data_copyin()
+
+!$ACC ENTER DATA COPYIN(res,h1,h2)
+
+      acctime1 = dnekclock()
+
+      call chktcg1(tolps,res,h1,h2,pmask,vmult,1,1)
+
+      if (param(21).gt.0.and.tolps.gt.abs(param(21)))
+     $   tolps = abs(param(21))
+      if (istep.eq.0) tolps = 1.e-4
+      tolpss = tolps
+c
+      iconv = 0
+
+      call rzero_acc(x_gmres,n)
+
+      outer = 0
+      do while (iconv.eq.0.and.iter.lt.500)
+         outer = outer+1
+
+         if(iter.eq.0) then                   !      -1
+            call col3_acc    (r_gmres,ml_gmres,res,n) ! r = L  res
+c           call copy(r,res,n)
+         else
+            !update residual
+            call copy_acc  (r_gmres,res,n)               ! r = res
+            call ax    (w_gmres,x_gmres,h1,h2,n)     ! w = A x
+            call add2s2_acc(r_gmres,w_gmres,-1.,n)       ! r = r - w
+                                                     !      -1
+            call col2_acc  (r_gmres,ml_gmres,n)          ! r = L   r
+         endif
+
+         gamma_gmres(1) = sqrt(glsc3(r_gmres,r_gmres,wt,n)) ! gamma  = \/ (r,r)
+         temp = gamma_gmres(1)
+
+         if(iter.eq.0) then
+            div0 = temp*norm_fac
+            if (param(21).lt.0) tolpss=abs(param(21))*div0
+         endif
+
+         !check for lucky convergence
+         rnorm = 0.
+         if(temp .eq. 0.) goto 9000
+         call cmult2_acc(v_gmres(1,1),r_gmres,1./temp,n) ! v  = r / gamma
+                                                   !  1            1
+         do j=1,m
+
+            iter = iter+1
+
+            call col3_acc(w_gmres,mu_gmres,v_gmres(1,j),n) ! w  = U   v
+                                                       !           j
+
+c . . . . . Overlapping Schwarz + coarse-grid . . . . . . .
+
+            etime2 = dnekclock()
+
+c     if (outer.gt.2) if_hyb = .true.       ! Slow outer convergence
+
+c           MJO - 3/17/17 - for variable h1, h2 in time
+
+            if (ifmgrid) then
+               call h1mg_solve(z_gmres(1,j),w_gmres,if_hyb) ! z  = M   w
+            else                                            !  j
+c              FIXME: Only mgrid portion is implemented in ACC so far
+               kfldfdm = ndim+1
+               if (param(100).eq.2) then
+                   call h1_overlap_2 (z_gmres(1,j),w_gmres,pmask)
+               else
+                   call fdm_h1
+     $               (z_gmres(1,j),w_gmres,d,pmask,vmult,nelv,
+     $                ktype(1,1,kfldfdm),wk)
+               endif
+               call crs_solve_h1 (wk,w_gmres)        ! z  = M   w
+               call add2         (z_gmres(1,j),wk,n) !  j
+            endif
+c           ROR: 2016-06-13: Calling ortho_acc() on CPU fails for
+c           certain 2D test cases (such as eddy_uv).  This is not
+c           entirely unexpected, since ortho_acc() hasn't been
+c           implemented for 2D test cases.
+            call ortho   (z_gmres(1,j)) ! Orthogonalize wrt null space, if present
+
+            etime_p = etime_p + dnekclock()-etime2
+
+c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+            call ax  (w_gmres,z_gmres(1,j),h1,h2,n) ! w = A z
+
+            call col2_acc(w_gmres,ml_gmres,n)           ! w = L   w
+
+            do i=1,j
+               h_gmres(i,j)=vlsc3(w_gmres,v_gmres(1,i),wt,n) ! h    = (w,v )
+            enddo                                            !  i,j       i
+
+            call gop(h_gmres(1,j),wk1,'+  ',j)          ! sum over P procs
+
+            do i=1,j
+               call add2s2(w_gmres,v_gmres(1,i),-h_gmres(i,j),n) ! w = w - h    v
+            enddo                                                !          i,j  i
+
+! Apply Givens rotations to new column
+!$ACC KERNELS PRESENT(h_gmres,c_gmres,s_gmres)
+            do i=1,j-1
+               temp = h_gmres(i,j)
+               h_gmres(i  ,j)=  c_gmres(i)*temp
+     $                        + s_gmres(i)*h_gmres(i+1,j)
+               h_gmres(i+1,j)= -s_gmres(i)*temp
+     $                        + c_gmres(i)*h_gmres(i+1,j)
+            enddo
+!$ACC END KERNELS
+                                                      !            ______
+            alpha = sqrt(glsc3(w_gmres,w_gmres,wt,n)) ! alpha =  \/ (w,w)
+            rnorm = 0.
+
+            if(alpha.eq.0.) goto 900  !converged
+
+!$ACC    KERNELS
+!$ACC&   PRESENT(w_gmres, wt, h_gmres, c_gmres, s_gmres, gamma_gmres)
+            l = sqrt(h_gmres(j,j)*h_gmres(j,j)+alpha*alpha)
+            temp = 1./l
+            c_gmres(j) = h_gmres(j,j) * temp
+            s_gmres(j) = alpha  * temp
+            h_gmres(j,j) = l
+            gamma_gmres(j+1) = -s_gmres(j) * gamma_gmres(j)
+            gamma_gmres(j)   =  c_gmres(j) * gamma_gmres(j)
+
+            rnorm = abs(gamma_gmres(j+1))*norm_fac
+            ratio = rnorm/div0
+!$ACC END KERNELS
+
+            if (ifprint.and.nio.eq.0)
+     $         write (6,66) iter,tolpss,rnorm,div0,ratio,istep
+   66       format(i5,1p4e12.5,i8,' Divergence')
+
+            if (rnorm .lt. tolpss) goto 900  !converged
+            if (j.eq.m) goto 1000 !not converged, restart
+
+            temp = 1./alpha
+
+            call cmult2_acc(v_gmres(1,j+1),w_gmres,temp,n) ! v    = w / alpha
+
+         enddo
+  900    iconv = 1
+ 1000    continue
+         !back substitution
+         !     -1
+         !c = H   gamma
+
+!$ACC KERNELS PRESENT(gamma_gmres, h_gmres, c_gmres)
+         do k=j,1,-1
+            temp = gamma_gmres(k)
+            do i=j,k+1,-1
+               temp = temp - h_gmres(k,i)*c_gmres(i)
+            enddo
+            c_gmres(k) = temp/h_gmres(k,k)
+         enddo
+!$ACC END KERNELS
+
+c        Sum of Arnoldi vectors
+c
+c        ROR: 2016-06-13: For OpenACC, we inlined the call to
+c        add2s2() so the compiler could infer some nested
+c        parallelism.
+         do i=1,j
+            call add2s2(x_gmres,z_gmres(1,i),c_gmres(i),n) ! x = x + c  z
+         enddo                                             !          i  i
+c        if(iconv.eq.1) call dbg_write(x,nx1,ny1,nz1,nelv,'esol',3)
+      enddo
+ 9000 continue
+
+      divex = rnorm
+
+      call copy_acc(res,x_gmres,n)
+
+c     ROR: 2016-06-13: Calling ortho_acc() on CPU fails for certain 2D
+c     test cases (such as eddy_uv).  This is not entirely unexpected,
+c     since ortho_acc() hasn't been implemented for 2D test cases.
+      call ortho   (res) ! Orthogonalize wrt null space, if present
+
+      acctime1 = dnekclock()-acctime1
+
+!$ACC EXIT DATA COPYOUT(h1,h2,res)
+
+      etime1 = dnekclock()-etime1
+      if (nio.eq.0) write(6,9999) istep,iter,divex,div0,tolpss,etime_p,
+     &                            etime1,if_hyb
+      if (nio.eq.0) write(6,*) 'acc_time: ', acctime1
+c     call flush_hack
+ 9999 format(4x,i7,'  PRES gmres ',4x,i5,1p5e13.4,1x,l4)
+      call hmh_gmres_acc_data_copyout()
+      if (outer.le.2) if_hyb = .false.
+
       return
       end
 c-----------------------------------------------------------------------
