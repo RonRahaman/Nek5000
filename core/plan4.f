@@ -55,6 +55,9 @@ C
          call sumab_acc(vx_e,vx,vxlag,ntot1,ab,nab)
          call sumab_acc(vy_e,vy,vylag,ntot1,ab,nab)
          call sumab_acc(vz_e,vz,vzlag,ntot1,ab,nab)
+c        ROR: 2017-07-27: These must be updated on the host as long as
+c        we are running crespsp on the host.
+!$acc update host(vx_e,vy_e,vz_e)
 
       else
          ! add user defined divergence to qtl 

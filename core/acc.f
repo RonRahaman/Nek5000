@@ -1105,7 +1105,7 @@ c      implicit none
          enddo
 !$ACC END PARALLEL LOOP
 
-cc!$ACC END DATA
+!$ACC END DATA
 
 c         write(6,*) iter, ' iter'
 
