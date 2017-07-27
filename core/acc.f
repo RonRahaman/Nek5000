@@ -1067,8 +1067,8 @@ c      implicit none
       nxyz = lx1*ly1*lz1
       nelt = lelt
 
-cc!$ACC DATA PRESENT(u1r,u1s,u1t,u2r,u2s,u2t,u3r,u3s,u3t,w1,w2,w3)
-cc!$ACC&     PRESENT(jacmi,rxm1,sxm1,txm1,rym1,sym1,tym1,rzm1,szm1,tzm1)
+!$ACC DATA PRESENT(u1r,u1s,u1t,u2r,u2s,u2t,u3r,u3s,u3t,w1,w2,w3)
+!$ACC&     PRESENT(jacmi,rxm1,sxm1,txm1,rym1,sym1,tym1,rzm1,szm1,tzm1)
 
 
 !$ACC PARALLEL LOOP COLLAPSE(4) GANG WORKER VECTOR
