@@ -18,15 +18,15 @@ c
       INCLUDE 'ORTHOP'
       INCLUDE 'CTIMER'
 C
-      COMMON /SCRNS/ RES1  (LX1,LY1,LZ1,LELV)
-     $ ,             RES2  (LX1,LY1,LZ1,LELV)
-     $ ,             RES3  (LX1,LY1,LZ1,LELV)
-     $ ,             DV1   (LX1,LY1,LZ1,LELV)
-     $ ,             DV2   (LX1,LY1,LZ1,LELV)
-     $ ,             DV3   (LX1,LY1,LZ1,LELV)
-     $ ,             RESPR (LX2,LY2,LZ2,LELV)
-      common /scrvh/ h1    (lx1,ly1,lz1,lelv)
-     $ ,             h2    (lx1,ly1,lz1,lelv)
+      real RES1  (LX1,LY1,LZ1,LELV)
+     $ ,   RES2  (LX1,LY1,LZ1,LELV)
+     $ ,   RES3  (LX1,LY1,LZ1,LELV)
+     $ ,   DV1   (LX1,LY1,LZ1,LELV)
+     $ ,   DV2   (LX1,LY1,LZ1,LELV)
+     $ ,   DV3   (LX1,LY1,LZ1,LELV)
+     $ ,   RESPR (LX2,LY2,LZ2,LELV)
+      real h1    (lx1,ly1,lz1,lelv)
+     $ ,   h2    (lx1,ly1,lz1,lelv)
  
       REAL           DPR   (LX2,LY2,LZ2,LELV)
       EQUIVALENCE   (DPR,DV1)
@@ -74,13 +74,16 @@ C        first, compute pressure
          npres=icalld
          etime1=dnekclock()
 
-!$ACC UPDATE DEVICE(vtrans)
-!$ACC DATA CREATE(h1,h2,respr) 
-         call crespsp_acc  (respr)
+!$ACC UPDATE HOST(vtrans,omask,bm1,qtl,vdiff,pr,binvm1,
+!$ACC&   rxm1,sxm1,txm1,rym1,sym1,tym1,rzm1,szm1,tzm1)
+         call crespsp  (respr)
+!$ACC UPDATE DEVICE(vtrans,omask,bm1,qtl,vdiff,pr,binvm1,
+!$ACC&   rxm1,sxm1,txm1,rym1,sym1,tym1,rzm1,szm1,tzm1)
+
+!$ACC DATA CREATE(respr,dpr,h1,h2,dv1,dv2,dv3)
          call invers2_acc (h1,vtrans,ntot1)
          call rzero_acc   (h2,ntot1)
          call ctolspl_acc(tolspl,respr)
-!$ACC END DATA 
 
          napproxp(1) = laxtp
          call hsolve('PRES',dpr,respr,h1,h2 
@@ -88,20 +91,16 @@ C        first, compute pressure
      $                        ,imesh,tolspl,nmxh,1
      $                        ,approxp,napproxp,binvm1)
  
-!$ACC  DATA COPY(pr,dpr)
          call add2_acc (pr,dpr,ntot1)
          call ortho_acc(pr)
-!$ACC END DATA 
 
          tpres=tpres+(dnekclock()-etime1)
 
+!$ACC UPDATE HOST(h1,h2)
          call cresvsp (res1,res2,res3,h1,h2)
          call ophinv_pr(dv1,dv2,dv3,res1,res2,res3,h1,h2,tolhv,nmxh)
- 
+!$ACC UPDATE DEVICE(dv1,dv2,dv3)
   
-c below gives correct values in iterations
-c but printed values are wierd  L1/L2 DIV(V) 6.9034-310   6.9034-310  
-!$ACC DATA COPY(vx,vy,vz,dv1,dv2,dv3)
          call add2_acc  (vx,dv1,n)      
          call add2_acc  (vy,dv2,n)
          call add2_acc  (vz,dv3,n)
@@ -117,6 +116,10 @@ c but printed values are wierd  L1/L2 DIV(V) 6.9034-310   6.9034-310
             IF (DIF2.GT.0.1) WRITE(6,'(13X,A)') 
      &         'WARNING: DIV(V)-QTL too large!'
          ENDIF
+
+         if (igeom .eq. ngeom) then
+            call plan4_acc_update_host
+         endif
  
       endif
  

@@ -32,6 +32,8 @@ c-----------------------------------------------------------------------
 !$acc   enter data copyin (pr,prlag,qtl,usrdiv)
 !$acc   enter data copyin (vtrans,vdiff)
 
+!$acc   enter data create (ibc_acc)
+
 c!$acc   enter data copyin (vxlag,vylag,vzlag,tlag,vgradt1,vgradt2)
 c!$acc   enter data copyin (vx,vy,vz,vx_e,vy_e,vz_e,vtrans,vdiff,vdiff_e)
 c!$acc   enter data copyin (bfx,bfy,bfz,bq,t,pr,prlag,qtl,usrdiv)
@@ -39,6 +41,37 @@ c!$acc   enter data copyin (bfx,bfy,bfz,bq,t,pr,prlag,qtl,usrdiv)
       endif
 
 !$acc enter data copyin (c_vx)
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine plan4_acc_update_host()
+c-----------------------------------------------------------------------
+
+      include 'SIZE'
+      include 'TOTAL'    
+
+!$acc  update host (v1mask,v2mask,v3mask,pmask,tmask,omask)
+!$acc  update host (pmult,tmult,vmult)
+!$acc  update host (dxm1,dxtm1,w3m1)
+!$acc  update host (bm1,bm1lag,binvm1,bintm1)
+!$acc  update host (jacm1,jacmi)
+!$acc  update host (xm1,ym1,zm1)
+!$acc  update host (unx,uny,unz,area)
+!$acc  update host (rxm1,sxm1,txm1)
+!$acc  update host (rym1,sym1,tym1)
+!$acc  update host (rzm1,szm1,tzm1)
+!$acc  update host (g1m1,g2m1,g3m1,g4m1,g5m1,g6m1)
+!$acc  update host (cbc,bc)
+!$acc  update host (abx1,aby1,abz1,abx2,aby2,abz2)
+!$acc  update host (ab)
+!$acc  update host (bfx,bfy,bfz)
+!$acc  update host (vx,vy,vz,vx_e,vy_e,vz_e)
+!$acc  update host (vtrans)
+!$acc  update host (vxlag,vylag,vzlag)
+!$acc  update host (bd)
+!$acc  update host (pr,prlag,qtl,usrdiv)
+!$acc  update host (vtrans,vdiff)
 
       return
       end
