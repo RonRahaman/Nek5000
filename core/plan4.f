@@ -338,7 +338,7 @@ c     INLINED: call opadd2cm (wa1,wa2,wa3,ta1,ta2,ta3,scale)
 !$ACC END DATA
 
 c     call invcol3  (w1,vdiff,vtrans,ntot1)
-!$ACC UDPATE DEVICE(vdiff,vtrans)
+!$ACC UPDATE DEVICE(vdiff,vtrans)
 !$ACC DATA COPY(w1)
 !$ACC PARALLEL LOOP
       do e = 1, nelv
@@ -392,7 +392,16 @@ c    call invers2 (ta1,vtrans,ntot1)
 !$ACC END PARALLEL
 !$ACC END DATA
 !$ACC UPDATE HOST(vtrans)
-      call rzero   (ta2,ntot1)
+
+!$ACC DATA COPY(ta2)
+!$ACC PARALLEL LOOP
+      do e = 1, nelv
+      do ijk = 1, nxyz1
+         ta2(ijk,e) = 0.0
+      end do
+      end do
+!$ACC END PARALLEL
+!$ACC END DATA
 
       call bcdirsc (pr)
 c     call outpost(vx,vy,vz,pr,t,'   ')
