@@ -323,54 +323,30 @@ c
       call opgrad   (ta1,ta2,ta3,QTL)
       scale = -4./3. 
 
-c     INLINED: call opadd2cm (wa1,wa2,wa3,ta1,ta2,ta3,scale)
 !$ACC UPDATE DEVICE(vdiff,vtrans)
 !$ACC DATA COPY (wa1,wa2,wa3,ta1,ta2,ta3)
 !$ACC PARALLEL
-      do e = 1, nelv
-      do ijk = 1, nxyz1
-         ijke = ijk + (e-1)*nxyz1
-         wa1(ijke) = wa1(ijke) + ta1(ijk,e) * scale
-         wa2(ijke) = wa2(ijke) + ta2(ijk,e) * scale
-         wa3(ijke) = wa3(ijke) + ta3(ijk,e) * scale
-      end do
-
+c     call opadd2cm (wa1,wa2,wa3,ta1,ta2,ta3,scale)
 c     call invcol3  (w1,vdiff,vtrans,ntot1)
-      do k = 1, nz1
-      do j = 1, ny1
-      do i = 1, nx1
-         ijk = i + (j-1)*nx1 + (k-1)*nx1*ny1
-         w1(ijk,e) = vdiff(i,j,k,e,1) / vtrans(i,j,k,e,1)
-      end do
-      end do
-      end do
-
 c     call opcolv   (wa1,wa2,wa3,w1)
+c     call invers2 (ta1,vtrans,ntot1)
+!$ACC LOOP COLLAPSE(4)
+      do e = 1, nelv
       do k = 1, nz1
       do j = 1, ny1
       do i = 1, nx1
          ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 + (e-1)*nx1*ny1*nz1
          ijk = i + (j-1)*nx1 + (k-1)*nx1*ny1
-         wa1(ijke) = wa1(ijke) * w1(ijk,e)
-         wa2(ijke) = wa2(ijke) * w1(ijk,e)
-         wa3(ijke) = wa3(ijke) * w1(ijk,e)
-      end do
-      end do
-      end do
-
-c     add old pressure term because we solve for delta p 
-c    call invers2 (ta1,vtrans,ntot1)
-      do k = 1, nz1
-      do j = 1, ny1
-      do i = 1, nx1
-         ijk = i + (j-1)*nx1 + (k-1)*nx1*ny1
+         wa1(ijke) = (wa1(ijke) + ta1(ijk,e) * scale) 
+     $               * vdiff(i,j,k,e,1) / vtrans(i,j,k,e,1)
+         wa2(ijke) = (wa2(ijke) + ta2(ijk,e) * scale) 
+     $               * vdiff(i,j,k,e,1) / vtrans(i,j,k,e,1)
+         wa3(ijke) = (wa3(ijke) + ta3(ijk,e) * scale) 
+     $               * vdiff(i,j,k,e,1) / vtrans(i,j,k,e,1)
          ta1(ijk,e) = 1. / vtrans(i,j,k,e,1)
-      end do
-      end do
-      end do
-
-      do ijk = 1, nxyz1
          ta2(ijk,e) = 0.0
+      end do
+      end do
       end do
       end do
 !$ACC END PARALLEL
