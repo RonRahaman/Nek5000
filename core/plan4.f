@@ -293,6 +293,8 @@ c
      $                     , wr(lr),ws(lr),wt(lr)
 
       CHARACTER CB*3
+
+      integer e
       
       NXYZ1  = NX1*NY1*NZ1
       NTOT1  = NXYZ1*NELV
@@ -305,9 +307,9 @@ c     -mu*curl(curl(v))
      &              .true.,w1,w2)
       call op_curl  (wa1,wa2,wa3,ta1,ta2,ta3,.true.,w1,w2)
 
-!$ACC UPDATE DEVICE(bm)
-!$ACC DATA COPY (wa,wa2,wa3)
 c     INLINED: call opcolv (wa1,wa2,wa3,bm1)
+!$ACC UPDATE DEVICE(bm)
+!$ACC DATA COPY (wa1,wa2,wa3)
 !$ACC PARALLEL LOOP
       do i = 1, ntot1
          wa1(i) = wa1(i) * bm(i)
@@ -320,7 +322,20 @@ c     INLINED: call opcolv (wa1,wa2,wa3,bm1)
 c
       call opgrad   (ta1,ta2,ta3,QTL)
       scale = -4./3. 
-      call opadd2cm (wa1,wa2,wa3,ta1,ta2,ta3,scale)
+
+c     INLINED: call opadd2cm (wa1,wa2,wa3,ta1,ta2,ta3,scale)
+!$ACC DATA COPY (wa1,wa2,wa3,ta1,ta2,ta3)
+!$ACC PARALLEL LOOP
+      do e = 1, nelv
+      do ijk = 1, nxyz1
+         ii = ijk + (e-1)*nxyz1
+         wa1(ii) = wa1(ii) + ta1(ijk,e) * scale
+         wa2(ii) = wa2(ii) + ta2(ijk,e) * scale
+         wa3(ii) = wa3(ii) + ta3(ijk,e) * scale
+      end do
+      end do
+!$ACC END PARALLEL
+!$ACC END DATA
 
 c compute stress tensor for ifstrs formulation - variable viscosity Pn-Pn
       if (ifstrs) then
