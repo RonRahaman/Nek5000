@@ -324,8 +324,9 @@ c
       scale = -4./3. 
 
 c     INLINED: call opadd2cm (wa1,wa2,wa3,ta1,ta2,ta3,scale)
+!$ACC UPDATE DEVICE(vdiff,vtrans)
 !$ACC DATA COPY (wa1,wa2,wa3,ta1,ta2,ta3)
-!$ACC PARALLEL LOOP
+!$ACC PARALLEL
       do e = 1, nelv
       do ijk = 1, nxyz1
          ijke = ijk + (e-1)*nxyz1
@@ -333,15 +334,8 @@ c     INLINED: call opadd2cm (wa1,wa2,wa3,ta1,ta2,ta3,scale)
          wa2(ijke) = wa2(ijke) + ta2(ijk,e) * scale
          wa3(ijke) = wa3(ijke) + ta3(ijk,e) * scale
       end do
-      end do
-!$ACC END PARALLEL
-!$ACC END DATA
 
 c     call invcol3  (w1,vdiff,vtrans,ntot1)
-!$ACC UPDATE DEVICE(vdiff,vtrans)
-!$ACC DATA COPY(w1)
-!$ACC PARALLEL LOOP
-      do e = 1, nelv
       do k = 1, nz1
       do j = 1, ny1
       do i = 1, nx1
@@ -350,15 +344,8 @@ c     call invcol3  (w1,vdiff,vtrans,ntot1)
       end do
       end do
       end do
-      end do
-!$ACC END PARALLEL
-!$ACC END DATA
-!$ACC UPDATE HOST(vdiff,vtrans)
 
 c     call opcolv   (wa1,wa2,wa3,w1)
-!$ACC DATA COPY(w1,wa1,wa2,wa3)
-!$ACC PARALLEL LOOP
-      do e = 1, nelv
       do k = 1, nz1
       do j = 1, ny1
       do i = 1, nx1
@@ -370,16 +357,9 @@ c     call opcolv   (wa1,wa2,wa3,w1)
       end do
       end do
       end do
-      end do
-!$ACC END PARALLEL
-!$ACC END DATA
 
 c     add old pressure term because we solve for delta p 
 c    call invers2 (ta1,vtrans,ntot1)
-!$ACC UPDATE DEVICE(vtrans)
-!$ACC DATA COPY(ta1)
-!$ACC PARALLEL LOOP
-      do e = 1, nelv
       do k = 1, nz1
       do j = 1, ny1
       do i = 1, nx1
@@ -388,20 +368,14 @@ c    call invers2 (ta1,vtrans,ntot1)
       end do
       end do
       end do
-      end do
-!$ACC END PARALLEL
-!$ACC END DATA
-!$ACC UPDATE HOST(vtrans)
 
-!$ACC DATA COPY(ta2)
-!$ACC PARALLEL LOOP
-      do e = 1, nelv
       do ijk = 1, nxyz1
          ta2(ijk,e) = 0.0
       end do
       end do
 !$ACC END PARALLEL
 !$ACC END DATA
+!$ACC UPDATE HOST(vdiff,vtrans)
 
       call bcdirsc (pr)
 c     call outpost(vx,vy,vz,pr,t,'   ')
