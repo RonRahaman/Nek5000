@@ -74,7 +74,7 @@ C        first, compute pressure
          npres=icalld
          etime1=dnekclock()
 
-         call crespsp  (respr)
+         call crespsp  (respr,bm1)
 !$ACC DATA COPY(h1,h2,vtrans,respr)   
          call invers2_acc (h1,vtrans,ntot1)
          call rzero_acc   (h2,ntot1)
@@ -266,7 +266,7 @@ c        Calculate Divergence difference norms
       END
 
 c-----------------------------------------------------------------------
-      subroutine crespsp (respr)
+      subroutine crespsp (respr,bm)
 
 C     Compute startresidual/right-hand-side in the pressure
 
@@ -274,13 +274,14 @@ C     Compute startresidual/right-hand-side in the pressure
       INCLUDE 'TOTAL'
 
       REAL           RESPR (LX1*LY1*LZ1,LELV)
+      REAL           bm (LX1*LY1*LZ1*LELV)
 c
-      COMMON /SCRNS/ TA1   (LX1*LY1*LZ1,LELV)
-     $ ,             TA2   (LX1*LY1*LZ1,LELV)
-     $ ,             TA3   (LX1*LY1*LZ1,LELV)
-     $ ,             WA1   (LX1*LY1*LZ1*LELV)
-     $ ,             WA2   (LX1*LY1*LZ1*LELV)
-     $ ,             WA3   (LX1*LY1*LZ1*LELV)
+      real TA1   (LX1*LY1*LZ1,LELV)
+     $ ,   TA2   (LX1*LY1*LZ1,LELV)
+     $ ,   TA3   (LX1*LY1*LZ1,LELV)
+     $ ,   WA1   (LX1*LY1*LZ1*LELV)
+     $ ,   WA2   (LX1*LY1*LZ1*LELV)
+     $ ,   WA3   (LX1*LY1*LZ1*LELV)
       COMMON /SCRMG/ W1    (LX1*LY1*LZ1,LELV)
      $ ,             W2    (LX1*LY1*LZ1,LELV)
      $ ,             W3    (LX1*LY1*LZ1,LELV)
@@ -302,22 +303,20 @@ c      call lagvel
 c     -mu*curl(curl(v))
       call op_curl (ta1,ta2,ta3,vx_e,vy_e,vz_e,
      &              .true.,w1,w2)
-      if(IFAXIS) then  
-         CALL COL2 (TA2, OMASK,NTOT1)
-         CALL COL2 (TA3, OMASK,NTOT1)
-      endif
       call op_curl  (wa1,wa2,wa3,ta1,ta2,ta3,.true.,w1,w2)
-      if(IFAXIS) then  
-         CALL COL2  (WA2, OMASK,NTOT1)
-         CALL COL2  (WA3, OMASK,NTOT1)
-      endif
-      call opcolv   (wa1,wa2,wa3,bm1)
+
+!$ACC UPDATE DEVICE(bm)
+!$ACC DATA COPY (wa,wa2,wa3)
+c     INLINED: call opcolv_acc   (wa1,wa2,wa3,bm1)
+      do i = 1, ntot1
+         wa1(i) = wa1(i) * bm(i)
+         wa2(i) = wa2(i) * bm(i)
+         wa3(i) = wa3(i) * bm(i)
+      end do
+!$ACC END DATA
+!$ACC UPDATE HOST(bm)
 c
       call opgrad   (ta1,ta2,ta3,QTL)
-      if(IFAXIS) then  
-         CALL COL2  (ta2, OMASK,ntot1)
-         CALL COL2  (ta3, OMASK,ntot1)
-      endif
       scale = -4./3. 
       call opadd2cm (wa1,wa2,wa3,ta1,ta2,ta3,scale)
 
