@@ -943,7 +943,7 @@ c-----------------------------------------------------------------------
       include 'SIZE'
       character*3 s3
 
-      write(6,*) 'checker: ',s3
+c     write(6,*) 'checker: ',s3
 
       return
       end

@@ -307,12 +307,14 @@ c     -mu*curl(curl(v))
 
 !$ACC UPDATE DEVICE(bm)
 !$ACC DATA COPY (wa,wa2,wa3)
-c     INLINED: call opcolv_acc   (wa1,wa2,wa3,bm1)
+c     INLINED: call opcolv (wa1,wa2,wa3,bm1)
+!$ACC PARALLEL LOOP
       do i = 1, ntot1
          wa1(i) = wa1(i) * bm(i)
          wa2(i) = wa2(i) * bm(i)
          wa3(i) = wa3(i) * bm(i)
       end do
+!$ACC END PARALLEL
 !$ACC END DATA
 !$ACC UPDATE HOST(bm)
 c
