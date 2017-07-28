@@ -30,6 +30,7 @@ c-----------------------------------------------------------------------
 !$acc   enter data copyin (vxlag,vylag,vzlag)
 !$acc   enter data copyin (bd)
 !$acc   enter data copyin (qtl,usrdiv)
+!$acc   enter data copyin (vtrans,vdiff)
 
 c!$acc   enter data copyin (vxlag,vylag,vzlag,tlag,vgradt1,vgradt2)
 c!$acc   enter data copyin (vx,vy,vz,vx_e,vy_e,vz_e,vtrans,vdiff,vdiff_e)

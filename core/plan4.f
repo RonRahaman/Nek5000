@@ -282,9 +282,9 @@ c
      $ ,   WA1   (LX1*LY1*LZ1*LELV)
      $ ,   WA2   (LX1*LY1*LZ1*LELV)
      $ ,   WA3   (LX1*LY1*LZ1*LELV)
-      COMMON /SCRMG/ W1    (LX1*LY1*LZ1,LELV)
-     $ ,             W2    (LX1*LY1*LZ1,LELV)
-     $ ,             W3    (LX1*LY1*LZ1,LELV)
+      real W1    (LX1*LY1*LZ1,LELV)
+     $ ,   W2    (LX1*LY1*LZ1,LELV)
+     $ ,   W3    (LX1*LY1*LZ1,LELV)
 
       common /scruz/         sij (lx1*ly1*lz1,6,lelv)
       parameter (lr=lx1*ly1*lz1)
@@ -337,28 +337,24 @@ c     INLINED: call opadd2cm (wa1,wa2,wa3,ta1,ta2,ta3,scale)
 !$ACC END PARALLEL
 !$ACC END DATA
 
-c compute stress tensor for ifstrs formulation - variable viscosity Pn-Pn
-      if (ifstrs) then
-         call opgrad   (ta1,ta2,ta3,vdiff)
-         call invcol2  (ta1,vdiff,ntot1)
-         call invcol2  (ta2,vdiff,ntot1)
-         call invcol2  (ta3,vdiff,ntot1)
+c     call invcol3  (w1,vdiff,vtrans,ntot1)
+!$ACC UDPATE DEVICE(vdiff,vtrans)
+!$ACC DATA COPY(w1)
+!$ACC PARALLEL LOOP
+      do e = 1, nelv
+      do k = 1, nz1
+      do j = 1, ny1
+      do i = 1, nx1
+         ijk = i + (j-1)*nx1 + (k-1)*nx1*ny1
+         w1(ijk,e) = vdiff(i,j,k,e,1) / vtrans(i,j,k,e,1)
+      end do
+      end do
+      end do
+      end do
+!$ACC END PARALLEL
+!$ACC END DATA
+!$ACC UPDATE HOST(vdiff,vtrans)
 
-         nij = 3
-         if (if3d.or.ifaxis) nij=6
-
-         call comp_sij   (sij,nij,vx_e,vy_e,vz_e,
-     &                    ur,us,ut,vr,vs,vt,wr,ws,wt)
-         call col_mu_sij (w1,w2,w3,ta1,ta2,ta3,sij,nij)
-
-         call opcolv   (ta1,ta2,ta3,QTL)
-         scale2 = -2./3. 
-         call opadd2cm (w1,w2,w3,ta1,ta2,ta3,scale2)
-         call opsub2   (wa1,wa2,wa3,w1,w2,w3)
-
-      endif
-
-      call invcol3  (w1,vdiff,vtrans,ntot1)
       call opcolv   (wa1,wa2,wa3,w1)
 
 c     add old pressure term because we solve for delta p 
