@@ -810,7 +810,7 @@ c           CALL opcolv3c_acc(TA1,TA2,TA3,VXLAG (1,1,1,1,ILAG-1),
 c    $                                VYLAG (1,1,1,1,ILAG-1),
 c    $                                VZLAG (1,1,1,1,ILAG-1),
 c    $                                BM1LAG(1,1,1,1,ILAG-1),bd(ilag+1))
-!$acc parallel loop
+!$acc parallel loop collapse(4)
             do e = 1, nelv
             do k = 1, lz1
             do j = 1, ly1
@@ -835,7 +835,7 @@ c           CALL opcolv3c_acc(TA1,TA2,TA3,VXLAG (1,1,1,1,ILAG-1),
 c    $                                VYLAG (1,1,1,1,ILAG-1),
 c    $                                VZLAG (1,1,1,1,ILAG-1),
 c    $                                BM1                   ,bd(ilag+1))
-!$acc parallel
+!$acc parallel loop collapse(4)
             do e = 1, nelv
             do k = 1, lz1
             do j = 1, ly1
@@ -861,7 +861,7 @@ c         =
 c          CALL ADD2(TB1,TA1,NTOT1)
 c          CALL ADD2(TB2,TA2,NTOT1)
 c          IF(NDIM.EQ.3)CALL ADD2(TB3,TA3,NTOT1)
-!$acc parallel
+!$acc parallel loop collapse(4)
          do e = 1, nelv
          do k = 1, lz1
          do j = 1, ly1
@@ -878,7 +878,7 @@ c          IF(NDIM.EQ.3)CALL ADD2(TB3,TA3,NTOT1)
 
 c     INLINED:
 c     call opadd2col_acc(BFX,BFY,BFZ,TB1,TB2,TB3,h2)
-!$acc parallel
+!$acc parallel loop collapse(4)
       do e = 1, nelv
       do k = 1, lz1
       do j = 1, ly1
