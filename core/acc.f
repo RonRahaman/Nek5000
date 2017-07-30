@@ -1617,6 +1617,8 @@ c-----------------------------------------------------------------------
       integer e
       character*4 s4
 
+      return
+
       do e = 1,nelv
          max = glamax_acc(a(1,1,1,e),n1**3)
          if (e.eq.1) then

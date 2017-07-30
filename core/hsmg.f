@@ -782,7 +782,7 @@ c     call hsmg_extrude(mg_work,0,one ,mg_work,2,onem,enx,eny,enz)
       call h1mg_mask (e,mg_imask(pm),nelfld(ifield)) ! apply mask
       call chk2('u2q',e)
 
-      call exitti("end in h1mg_schwarz$",1)
+c     call exitti("end in h1mg_schwarz$",1)
 
       return
       end

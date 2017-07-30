@@ -97,12 +97,14 @@ C        first, compute pressure
          npres=icalld
          etime1=dnekclock()
 
-         call crespsp_acc(respr)
+c        call chk2('t0:',respr)
+         call crespsp(respr)
 
 !$ACC ENTER DATA COPYIN(h1,h2,respr)
          call chk2('t1:',respr)
          call chk2('t2:',h1)
          call chk2('t3:',h2)
+c        call exitti('ending after crespsp$',1)
          call invers2_acc (h1,vtrans,n)
          call rzero_acc   (h2,n)
          call ctolspl_acc(tolspl,respr)
