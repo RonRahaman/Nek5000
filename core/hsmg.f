@@ -782,7 +782,7 @@ c     call chk2('u2p',e)
       call h1mg_mask (e,mg_imask(pm),nelfld(ifield)) ! apply mask
 c     call chk2('u2q',e)
 
-c     call exitti("end in h1mg_schwarz$",1)
+      call exitti("end in h1mg_schwarz$",1)
 
       return
       end
