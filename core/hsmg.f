@@ -582,10 +582,13 @@ c----------------------------------------------------------------------
       include 'HSMG'
 
       real e(1),r(1)
+c     real e(mg_h1_n(l,mg_fld)),r(1)
 
       n = mg_h1_n(l,mg_fld)
       call h1mg_schwarz_part1 (e,r,l)
+c     call chk2('u23',e)
       call hsmg_schwarz_wt    (e,l)          ! e  := W e
+c     call chk2('u24',e)
       !call cmult              (e,sigma,n)    !  l       l
 
       !FIXME: Might not work because e is declared e(1)
@@ -613,8 +616,17 @@ c----------------------------------------------------------------------
 
       n  = mg_h1_n (l,mg_fld)
       pm = p_mg_msk(l,mg_fld)
+c     write (*,*) 'n=',n
+c     write (*,*) 'pm=',pm
 
+c     call chk2("u2e",r)
+c     call chk2("u2f",mg_imask)
+!$ACC UPDATE HOST(nelfld,mg_imask)
+c     write (6,*) 'mg_imask(pm)=',mg_imask(pm)
+c     write (6,*) 'nelfld(ifield)=',nelfld(ifield)
       call h1mg_mask  (r,mg_imask(pm),nelfld(ifield))  ! Zero Dirichlet nodes
+c     call chk2("u2g",r)
+c     call chk2("u2h",mg_imask)
 
 #ifdef DEBUG
 !$ACC UPDATE HOST(mg_work)
@@ -638,6 +650,7 @@ c----------------------------------------------------------------------
       enx=mg_nh(l)+2
       eny=mg_nh(l)+2
       enz=mg_nh(l)+2
+      nenxyz = enx*eny*enz*nelv
       if(.not.if3d) enz=1
       i = enx*eny*enz*nelv+1
       mg_work_size = enx*eny*enz*nelv
@@ -683,6 +696,7 @@ c     exchange interior nodes
      $     (mg_work(k + l**ndim), k=1,mg_nh(l))
 #endif
 
+c     call hsmg_extrude(mg_work,0,zero,mg_work,2,one,enx,eny,enz)
       call hsmg_extrude(mg_work,0,one ,mg_work,2,onem,enx,eny,enz)
 
 #ifdef DEBUG
@@ -696,8 +710,20 @@ c     exchange interior nodes
         write(0,*), 'mg_work(1,1:mg_nh(l)', nl**ndim, ',1): ', 
      $     (mg_work(k + l**ndim), k=1,mg_nh(l))
 #endif
+!$ACC UPDATE HOST(mg_work)
+
+c     call chk2n('u2 1',mg_work,nenxyz)
+c     write (*,*) 'test'
+c     call chk2n('u2 2',mg_work(i),nenxyz)
+c     call chk4('u2 3',mg_work,10)
+c     call chk4('u2 4',mg_work(i),10)
 
       call hsmg_fdm(mg_work(i),mg_work,l) ! Do the local solves
+
+c     call chk2n('u2 5',mg_work,nenxyz)
+c     call chk2n('u2 6',mg_work(i),nenxyz)
+c     call chk4('u2 7',mg_work,10)
+c     call chk4('u2 8',mg_work(i),10)
 
 #ifdef DEBUG
 !$ACC UPDATE HOST(mg_work)
@@ -712,12 +738,35 @@ c     exchange interior nodes
 #endif
 
 c     Sum overlap region (border excluded)
+c     call chk2n('u2i',mg_work,nenxyz)
+c     call chk2n('u2i',mg_work(i),nenxyz)
+c     write (6,*) 'i=',i
+!$ACC UPDATE HOST(mg_work)
+c     write (6,*) 'mg_work(i)=',mg_work(i)
+c     write (6,*) 'zero=',zero
+c     write (6,*) 'one=',one
+c     write (6,*) 'enx=',enx
+c     write (6,*) 'eny=',eny
+c     write (6,*) 'enz=',enz
+c     call chk4('u2i1',mg_work,10)
+c     call chk4('u2i2',mg_work(i),10)
+c     call hsmg_extrude(mg_work,0,zero,mg_work,2,one,enx,eny,enz)
+c     call hsmg_extrude(mg_work,0,one ,mg_work,2,onem,enx,eny,enz)
       call hsmg_extrude(mg_work,0,zero,mg_work(i),0,one ,enx,eny,enz)
+c     call chk3n('u2j',mg_work,nenxyz)
+c     call chk2n('u2j',mg_work(i),nenxyz)
+c     call chk4('u2j1',mg_work,10)
+c     call chk4('u2j2',mg_work(i),10)
 
       call hsmg_schwarz_dssum2(mg_work(i),l,mg_work_size)
+c     call chk2('u2k',mg_work)
 
       call hsmg_extrude(mg_work(i),0,one ,mg_work,0,onem,enx,eny,enz)
+c     call chk2('u2l',mg_work)
       call hsmg_extrude(mg_work(i),2,one,mg_work(i),0,one,enx,eny,enz)
+
+c     call chk2('u2m',mg_work)
+c     call chk2('u2n',e)
 
       if(.not.if3d) then ! Go back to regular size array
          call hsmg_schwarz_toreg2d(e,mg_work(i),mg_nh(l))
@@ -726,9 +775,14 @@ c     Sum overlap region (border excluded)
       endif
 
 
+c     call chk2('u2o',e)
       call hsmg_dssum2(e,l,lt)  ! sum border nodes
+c     call chk2('u2p',e)
 
       call h1mg_mask (e,mg_imask(pm),nelfld(ifield)) ! apply mask
+c     call chk2('u2q',e)
+
+      call exitti("end in h1mg_schwarz$",1)
 
       return
       end
@@ -1138,6 +1192,13 @@ c     clobbers r
       include 'SIZE'
       include 'INPUT'
       include 'HSMG'
+
+c     write (6,*) 'mg_fast_s(mg_fast_s_index(l,mg_fld))',
+c    $             mg_fast_s(mg_fast_s_index(l,mg_fld))
+c     write (6,*) 'mg_fast_d(mg_fast_d_index(l,mg_fld))',
+c    $             mg_fast_d(mg_fast_d_index(l,mg_fld))
+c     write (6,*) 'mg_nh(l)+2',mg_nh(l)+2
+
 #ifdef _OPENACC
       call hsmg_do_fast_acc(e,r,
      $     mg_fast_s(mg_fast_s_index(l,mg_fld)),
@@ -2330,9 +2391,14 @@ c     if_hybrid = .false.   ! to convergence efficiency
       l     = mg_h1_lmax
       n     = mg_h1_n(l,mg_fld)
       is    = 1                                       ! solve index
+c     call chk2('u21',z)
+c     call chk2('u22',rhs)
+c     write (*,*) 'l=',l
 !$ACC DATA PRESENT(mg_imask)
       call h1mg_schwarz(z,rhs,sigma,l)                ! z := sigma W M       rhs
 !$ACC END DATA
+c     call chk2('u25',z)
+c     call chk2('u26',rhs)
 !     Schwarz
 
 !      call copy(r,rhs,n)        ! r  := rhs

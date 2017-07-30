@@ -49,23 +49,46 @@ C
       if (igeom.eq.1) then
 
          call plan4_acc_data_copyin()
+c        call hsmg_acc_data_copyin()
          call makef_acc
 !$acc update host(bfx,bfy,bfz)
 
-         call sumab_acc(vx_e,vx,vxlag,ntot1,ab,nab)
-         call sumab_acc(vy_e,vy,vylag,ntot1,ab,nab)
-         call sumab_acc(vz_e,vz,vzlag,ntot1,ab,nab)
+         call chk2('r1:',vx_e)
+         call chk2('r2:',vy_e)
+         call chk2('r3:',vz_e)
+
+         call sumab_acc(vx_e,vx,vxlag,n,ab,nab)
+         call sumab_acc(vy_e,vy,vylag,n,ab,nab)
+         call sumab_acc(vz_e,vz,vzlag,n,ab,nab)
+
+         call chk2('r4:',vx_e)
+         call chk2('r5:',vy_e)
+         call chk2('r6:',vz_e)
 
       else
          ! add user defined divergence to qtl 
-         call add2_acc (qtl,usrdiv,ntot1)
+         call add2_acc (qtl,usrdiv,n)
+
+         call chk2('s1:',vx_e)
+         call chk2('s2:',vy_e)
+         call chk2('s3:',vz_e)
 
          call lagvel_acc
 
+         call chk2('s4:',vx_e)
+         call chk2('s5:',vy_e)
+         call chk2('s6:',vz_e)
+
          ! mask Dirichlet boundaries
-!$acc update host(vx,vy,vz)
+!$acc update host(vx,vy,vz,v1mask,v2mask,v3mask)
          call bcdirvc  (vx,vy,vz,v1mask,v2mask,v3mask) 
 !$acc update device(vx,vy,vz)
+
+         call chk2('s7:',vx_e)
+         call chk2('s8:',vy_e)
+         call chk2('s9:',vz_e)
+
+!$acc update host(vx_e,vy_e,vz_e)
 
 C        first, compute pressure
 
@@ -74,24 +97,52 @@ C        first, compute pressure
          npres=icalld
          etime1=dnekclock()
 
-!$ACC UPDATE DEVICE(vtrans)
-!$ACC DATA CREATE(h1,h2,respr) 
-         call crespsp_acc  (respr)
-         call invers2_acc (h1,vtrans,ntot1)
-         call rzero_acc   (h2,ntot1)
-         call ctolspl_acc(tolspl,respr)
-!$ACC END DATA 
 
-         napproxp(1) = laxtp
-         call hsolve('PRES',dpr,respr,h1,h2 
-     $                        ,pmask,vmult
-     $                        ,imesh,tolspl,nmxh,1
-     $                        ,approxp,napproxp,binvm1)
- 
-!$ACC  DATA COPY(pr,dpr)
-         call add2_acc (pr,dpr,ntot1)
+!$ACC ENTER DATA COPYIN(h1,h2,respr)
+         call chk2('t0:',respr)
+         call crespsp_acc(respr)
+         call chk2('t1:',respr)
+         call chk2('t2:',h1)
+         call chk2('t3:',h2)
+c        call exitti('ending after crespsp$',1)
+         call invers2_acc (h1,vtrans,n)
+         call rzero_acc   (h2,n)
+         call ctolspl_acc(tolspl,respr)
+         call chk2('t6:',respr)
+         call chk2('t7:',h1)
+         call chk2('t8:',h2)
+
+c        call hsolve('PRES',dpr,respr,h1,h2 
+c    $                        ,pmask,vmult
+c    $                        ,imesh,tolspl,nmxh,1
+c    $                        ,approxp,napproxp,binvm1)
+c         call hmholtz('PRES',dpr,respr,h1,h2,pmask,vmult,imesh,tolspl,
+c     $      nmxh,1)
+
+!$ACC UPDATE HOST(respr)
+!$ACC EXIT DATA
+
+         call chk3('t81',respr)
+         call dssum     (respr,nx1,ny1,nz1)
+         call chk3('t9 ',respr)
+
+!$ACC ENTER DATA COPYIN(respr,pmask,h1,h2)
+
+         call chk2('t91',respr)
+         call col2_acc  (respr,pmask,n)
+         call chk2('ta ',respr)
+         call hmh_gmres (respr,h1,h2,vmult,nmxh)
+
+         call chk2('u1:',respr)
+         call add2_acc (pr,respr,n)
+         call chk2('u2:',pr)
          call ortho_acc(pr)
-!$ACC END DATA 
+         call chk2('u3:',pr)
+ccc!$ACC UPDATE HOST(pr,h1,h2)
+!$ACC EXIT DATA 
+         call chk3('u4:',pr)
+         call chk3('u4:',h1)
+         call chk3('u4:',h2)
 
          tpres=tpres+(dnekclock()-etime1)
 
@@ -773,3 +824,60 @@ c     call add2s2_acc(v,vvlag(1,2),ab2,ntot)
 
       return
       end
+c-----------------------------------------------------------------------
+      subroutine crespsp_face_update(respr,ta1,ta2,ta3,dtbd,w1,w2,w3)
+c
+      include 'SIZE'
+      include 'TOTAL'
+
+      parameter(lz=lx1*ly1*lz1)
+      real respr(lz,lelt),ta1(lz,lelt),ta2(lz,lelt),ta3(lz,lelt)
+      real w1(lz),w2(lz),w3(lz)
+
+      character*1 c1
+      character*3 cb
+      integer e,f
+
+      nfaces = 2*ndim
+
+!$ACC UPDATE HOST(respr,ta1,ta2,ta3)
+
+      do e=1,nelv
+      do f=1,nfaces
+
+         call rzero  (w1,lz)
+         call rzero  (w2,lz)
+         if (ldim.eq.3) call rzero  (w3,lz)
+
+         cb = cbc(f,e,ifield)
+         c1 = cbc(f,e,ifield)
+
+         if (c1.eq.'V'.or.c1.eq.'v'.or.cb.eq.'MV '.or.cb.eq.'mv ') then
+            call faccl3(w1,vx(1,1,1,e),unx(1,1,f,e),f)
+            call faccl3(w2,vy(1,1,1,e),uny(1,1,f,e),f)
+            if (ldim.eq.3)
+     $      call faccl3(w3,vz(1,1,1,e),unz(1,1,f,e),f)
+         elseif (cb.eq.'SYM') then
+            call faccl3(w1,ta1(1,e),unx(1,1,f,e),f)
+            call faccl3(w2,ta2(1,e),uny(1,1,f,e),f)
+            if (ldim.eq.3)
+     $       call faccl3(w3,ta3(1,e),unz(1,1,f,e),f)
+         endif
+
+         call add2   (w1,w2,lz)
+         if (ldim.eq.3) call add2   (w1,w3,lz)
+
+         call faccl2 (w1,area(1,1,f,e),f)
+
+         if (c1.eq.'V'.or.c1.eq.'v'.or.cb.eq.'MV '.or.cb.eq.'mv ') 
+     $     call cmult(w1,dtbd,lz)
+         
+         call sub2 (respr(1,e),w1,lz)
+      enddo
+      enddo
+
+!$ACC UPDATE DEVICE(respr)
+
+      return
+      end
+c-----------------------------------------------------------------------

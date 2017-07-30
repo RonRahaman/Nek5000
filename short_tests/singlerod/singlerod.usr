@@ -68,8 +68,15 @@ c-----------------------------------------------------------------------
       include 'NEKUSE'
       integer e,f,eg
 
-      ux   = 0.0
-      uy   = 0.0
+c     r = sqrt(x**2+y**2)
+c     th = atan2(y,x)
+
+c     ux   = r*cos(th)
+c     uy   = r*sin(th)
+
+      ux   = cos(x) * cos(y) * cos(z)
+      uy   = sin(x) * sin(y) * sin(z)
+
       uz   = 1.0
       temp = 0.0
 

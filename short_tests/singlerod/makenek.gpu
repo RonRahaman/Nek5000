@@ -15,6 +15,7 @@ PPLIST=""
 
 # generic compiler flags
 G="-mcmodel=medium -acc -Minfo=accel -ta=nvidia:cc50,cc60,cuda8.0"
+CFLAGS="-DNEW_GS_LOOPS"
 # For GPU profiling tools:
 #G="-mcmodel=medium -acc -Minfo=accel,ccff -ta=nvidia:cc50,cc60,cuda8.0,lineinfo"
 
