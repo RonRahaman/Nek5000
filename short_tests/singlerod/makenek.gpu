@@ -20,7 +20,7 @@ CFLAGS="-DNEW_GS_LOOPS"
 #G="-mcmodel=medium -acc -Minfo=accel,ccff -ta=nvidia:cc50,cc60,cuda8.0,lineinfo"
 
 # linking flags
-USR_LFLAGS="-mcmodel=medium -acc -Minfo=accel -ta=nvidia:cc50,cc60,cuda8.0 -DDEBUG"
+USR_LFLAGS="-mcmodel=medium -acc -Minfo=accel -ta=nvidia:cc50,cc60,cuda8.0"
 # linking flags
 #USR_LFLAGS="-mcmodel=medium -acc -Minfo=accel,ccff -ta=nvidia:cc50,cc60,cuda8.0"
 

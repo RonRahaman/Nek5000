@@ -49,7 +49,7 @@ C
       if (igeom.eq.1) then
 
          call plan4_acc_data_copyin()
-         if (istep.eq.1) call hsmg_acc_data_copyin()
+c        call hsmg_acc_data_copyin()
          call makef_acc
 !$acc update host(bfx,bfy,bfz)
 
@@ -97,8 +97,9 @@ C        first, compute pressure
          npres=icalld
          etime1=dnekclock()
 
+         call crespsp(respr)
+
 !$ACC ENTER DATA COPYIN(h1,h2,respr)
-         call crespsp_acc(respr)
          call chk2('t1:',respr)
          call chk2('t2:',h1)
          call chk2('t3:',h2)

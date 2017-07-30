@@ -51,6 +51,10 @@ c     subroutine hmh_gmres_acc_data_copyin()
       subroutine hsmg_acc_data_copyin
       include 'SIZE'
       include 'HSMG'
+      integer icalld
+      save    icalld
+      data    icalld/0/
+      if (icalld.eq.0) then ! ONE TIME ONLY
 
 !$ACC ENTER DATA COPYIN(mg_nx)
 !$ACC ENTER DATA COPYIN(mg_ny,mg_nz)
@@ -95,6 +99,7 @@ c     subroutine hmh_gmres_acc_data_copyin()
 !$ACC ENTER DATA COPYIN(p_mg_h1)
 !$ACC ENTER DATA COPYIN(p_mg_b)
 !$ACC ENTER DATA COPYIN(p_mg_msk)
+      endif
 
       return
       end
@@ -1549,7 +1554,7 @@ c-----------------------------------------------------------------------
       n=nx1*ny1*nz1*nelt
 
       amx=glamax_acc(a,n)
-      ams=glsum_acc(a,n)
+      ams=glasum_acc(a,n)
 
       write(6,*) s3,   ' dev  max ',amx
       write(6,*) '   ','      sum ',ams
@@ -1567,7 +1572,7 @@ c-----------------------------------------------------------------------
       n=nx1*ny1*nz1*nelt
 
       amx=glamax(a,n)
-      ams=glsum(a,n)
+      ams=glasum(a,n)
 
       write(6,*) s3,   ' host max ',amx
       write(6,*) '   ','      sum ',ams
@@ -1577,12 +1582,12 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine chk2n(s4,a,n)
       include 'SIZE'
-      character*3 s4
+      character*4 s4
 
       real a(n)
 
-      amx=glamax(a,n)
-      ams=glsum(a,n)
+      amx=glamax_acc(a,n)
+      ams=glasum_acc(a,n)
 
       write(6,*) s4,     ' dev  max ',amx
       write(6,*) '    ', '      sum ',ams
@@ -1597,7 +1602,7 @@ c-----------------------------------------------------------------------
       real a(n)
 
       amx=glamax(a,n)
-      ams=glsum(a,n)
+      ams=glasum(a,n)
 
       write(6,*) s4,     ' host max ',amx
       write(6,*) '    ', '      sum ',ams
@@ -1618,6 +1623,15 @@ c-----------------------------------------------------------------------
             write (6,*) s4,    ' e=',e,' max=',max
          else
             write (6,*) '    ',' e=',e,' max=',max
+         endif
+      enddo
+
+      do e = 1,nelv
+         sum = glasum_acc(a(1,1,1,e),n1**3)
+         if (e.eq.1) then
+            write (6,*) s4,    ' e=',e,' sum=',sum
+         else
+            write (6,*) '    ',' e=',e,' sum=',sum
          endif
       enddo
 

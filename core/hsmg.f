@@ -625,8 +625,8 @@ c----------------------------------------------------------------------
       write (6,*) 'mg_imask(pm)=',mg_imask(pm)
       write (6,*) 'nelfld(ifield)=',nelfld(ifield)
       call h1mg_mask  (r,mg_imask(pm),nelfld(ifield))  ! Zero Dirichlet nodes
-      call chk2("u2h",r)
-      call chk2("u2g",mg_imask)
+      call chk2("u2g",r)
+      call chk2("u2h",mg_imask)
 
 #ifdef DEBUG
 !$ACC UPDATE HOST(mg_work)
@@ -650,6 +650,7 @@ c----------------------------------------------------------------------
       enx=mg_nh(l)+2
       eny=mg_nh(l)+2
       enz=mg_nh(l)+2
+      nenxyz = enx*eny*enz*nelv
       if(.not.if3d) enz=1
       i = enx*eny*enz*nelv+1
       mg_work_size = enx*eny*enz*nelv
@@ -709,18 +710,20 @@ c     call hsmg_extrude(mg_work,0,zero,mg_work,2,one,enx,eny,enz)
         write(0,*), 'mg_work(1,1:mg_nh(l)', nl**ndim, ',1): ', 
      $     (mg_work(k + l**ndim), k=1,mg_nh(l))
 #endif
+!$ACC UPDATE HOST(mg_work)
 
       call chk2n('u2 1',mg_work,nenxyz)
+      write (*,*) 'test'
       call chk2n('u2 2',mg_work(i),nenxyz)
-      call chk4('u2 3',mg_work,10)
-      call chk4('u2 4',mg_work(i),10)
+c     call chk4('u2 3',mg_work,10)
+c     call chk4('u2 4',mg_work(i),10)
 
       call hsmg_fdm(mg_work(i),mg_work,l) ! Do the local solves
 
       call chk2n('u2 5',mg_work,nenxyz)
       call chk2n('u2 6',mg_work(i),nenxyz)
-      call chk4('u2 7',mg_work,10)
-      call chk4('u2 8',mg_work(i),10)
+c     call chk4('u2 7',mg_work,10)
+c     call chk4('u2 8',mg_work(i),10)
 
 #ifdef DEBUG
 !$ACC UPDATE HOST(mg_work)
@@ -735,7 +738,6 @@ c     call hsmg_extrude(mg_work,0,zero,mg_work,2,one,enx,eny,enz)
 #endif
 
 c     Sum overlap region (border excluded)
-      nenxyz = enx*eny*enz*nelv
       call chk2n('u2i',mg_work,nenxyz)
       call chk2n('u2i',mg_work(i),nenxyz)
       write (6,*) 'i=',i
@@ -1190,6 +1192,13 @@ c     clobbers r
       include 'SIZE'
       include 'INPUT'
       include 'HSMG'
+
+      write (6,*) 'mg_fast_s(mg_fast_s_index(l,mg_fld))',
+     $             mg_fast_s(mg_fast_s_index(l,mg_fld))
+      write (6,*) 'mg_fast_d(mg_fast_d_index(l,mg_fld))',
+     $             mg_fast_d(mg_fast_d_index(l,mg_fld))
+      write (6,*) 'mg_nh(l)+2',mg_nh(l)+2
+
 #ifdef _OPENACC
       call hsmg_do_fast_acc(e,r,
      $     mg_fast_s(mg_fast_s_index(l,mg_fld)),
