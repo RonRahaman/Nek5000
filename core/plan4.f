@@ -74,9 +74,8 @@ C        first, compute pressure
          npres=icalld
          etime1=dnekclock()
 
-!$ACC UPDATE DEVICE(vtrans)
-!$ACC DATA CREATE(h1,h2,respr) 
-         call crespsp_acc  (respr)
+         call crespsp  (respr)
+!$ACC DATA COPY(h1,h2,vtrans,respr)   
          call invers2_acc (h1,vtrans,ntot1)
          call rzero_acc   (h2,ntot1)
          call ctolspl_acc(tolspl,respr)
@@ -773,3 +772,4 @@ c     call add2s2_acc(v,vvlag(1,2),ab2,ntot)
 
       return
       end
+c-----------------------------------------------------------------------
