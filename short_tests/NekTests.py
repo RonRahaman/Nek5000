@@ -1229,10 +1229,11 @@ class Singlerod(NekTestCase):
         self.size_params['ly2'] = 'ly1'
         self.size_params['lz2'] = 'lz1'
         self.config_size(infile=os.path.join(self.examples_root, self.__class__.example_subdir, 'SIZE'))
-        self.build_nek(opts=dict(
-            G="-mcmodel=medium {}".format(self.g),
-            USR_LFLAGS="-mcmodel=medium {}".format(self.usr_lflags)
-        ))
+        if 'mcmodel' not in self.g:
+            self.g = '-mcmodel=medium {}'.format(self.g)
+        if 'mcmodel' not in self.usr_lflags:
+            self.usr_lflags = '-mcmodel=medium {}'.format(self.usr_lflags)
+        self.build_nek()
         self.run_nek(step_limit=10)
 
         gmres = self.get_value_from_log('gmres', column=-7)
@@ -1247,10 +1248,11 @@ class Singlerod(NekTestCase):
         self.size_params['ly2'] = 'ly1'
         self.size_params['lz2'] = 'lz1'
         self.config_size(infile=os.path.join(self.examples_root, self.__class__.example_subdir, 'SIZE'))
-        self.build_nek(opts=dict(
-            G="-mcmodel=medium {}".format(self.g),
-            USR_LFLAGS="-mcmodel=medium {}".format(self.usr_lflags)
-        ))
+        if 'mcmodel' not in self.g:
+            self.g = '-mcmodel=medium {}'.format(self.g)
+        if 'mcmodel' not in self.usr_lflags:
+            self.usr_lflags = '-mcmodel=medium {}'.format(self.usr_lflags)
+        self.build_nek()
         self.run_nek(step_limit=10)
 
         gmres = self.get_value_from_log('gmres', column=-7)
