@@ -12,8 +12,8 @@ env:
     #- TEST_CASE=Pipe_Stenosis::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
     #- TEST_CASE=Pipe_Stenosis::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
 
-    - TEST_CASE=Singlerod::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc G='-g -mcmodel=large' USR_LFLAGS='-g -mcmodel=large'
-    - TEST_CASE=Singlerod::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc G='-g -mcmodel=large' USR_LFLAGS='-g -mcmodel=large'
+    - TEST_CASE=Singlerod::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc G='-g -fbacktrace -mcmodel=large' USR_LFLAGS='-g -fbacktrace -mcmodel=large'
+     #- TEST_CASE=Singlerod::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc G='-g -mcmodel=large' USR_LFLAGS='-g -mcmodel=large'
 
     #- TEST_CASE=Solid::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
     #- TEST_CASE=Solid::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
