@@ -1765,5 +1765,10 @@ if __name__ == '__main__':
         os.environ['VERBOSE_TESTS'] = 'false'
         ut_verbose = 1
 
-    suite = unittest.TestSuite([unittest.TestLoader().loadTestsFromTestCase(t) for t in (Axi, Eddy_EddyUv)])
+    testNames = ['NekTests.{}.{}'.format(s,t) 
+            for s in ['ThreeDBox', 'Pipe_Stenosis', 'Solid', 'TurbChannel', 'Vortex'] 
+            for t in ['test_PnPn_Serial', 'test_PnPn_Parallel'] 
+    ]
+
+    suite = unittest.TestSuite([unittest.TestLoader().loadTestsFromNames(testNames)])
     unittest.TextTestRunner(verbosity=ut_verbose, buffer=True).run(suite)
