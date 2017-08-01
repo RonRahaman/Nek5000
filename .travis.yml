@@ -34,7 +34,7 @@ before_install:
 
   # Install MPICH
   - sudo apt-get update -qq
-  - sudo apt-get install -y openmpi-bin openmpi-common openssh-client openssh-server libopenmpi1.3 libopenmpi-dbg libopenmpi-dev
+  - sudo apt-get install -y openmpi-bin openmpi-common
 
   # Set up Python virtualenv
   - virtualenv -p python2.7 $ROOT_DIR/python2-env
