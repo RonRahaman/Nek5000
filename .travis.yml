@@ -6,23 +6,23 @@ env:
   matrix:
 
 
-    - TEST_CASE=ThreeDBox::test_PnPn_Serial   IFMPI=false F77=gfortran CC=gcc
-    - TEST_CASE=ThreeDBox::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
+    #- TEST_CASE=ThreeDBox::test_PnPn_Serial   IFMPI=false F77=gfortran CC=gcc
+    #- TEST_CASE=ThreeDBox::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
 
-    - TEST_CASE=Pipe_Stenosis::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
-    - TEST_CASE=Pipe_Stenosis::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
+    #- TEST_CASE=Pipe_Stenosis::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
+    #- TEST_CASE=Pipe_Stenosis::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
 
-    - TEST_CASE=Singlerod::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc G='-mcmodel=large' USR_LFLAGS='-mcmodel=large'
-    - TEST_CASE=Singlerod::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc G='-mcmodel=large' USR_LFLAGS='-mcmodel=large'
+    - TEST_CASE=Singlerod::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc G='-g -mcmodel=large' USR_LFLAGS='-g -mcmodel=large'
+    - TEST_CASE=Singlerod::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc G='-g -mcmodel=large' USR_LFLAGS='-g -mcmodel=large'
 
-    - TEST_CASE=Solid::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
-    - TEST_CASE=Solid::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
+    #- TEST_CASE=Solid::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
+    #- TEST_CASE=Solid::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
 
-    - TEST_CASE=TurbChannel::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
-    - TEST_CASE=TurbChannel::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
+    #- TEST_CASE=TurbChannel::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
+    #- TEST_CASE=TurbChannel::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
 
-    - TEST_CASE=Vortex::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
-    - TEST_CASE=Vortex::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
+    #- TEST_CASE=Vortex::test_PnPn_Serial   IFMPI=true F77=mpif77 CC=mpicc
+    #- TEST_CASE=Vortex::test_PnPn_Parallel IFMPI=true F77=mpif77 CC=mpicc
 
 before_install: 
   - export ROOT_DIR=`pwd`
