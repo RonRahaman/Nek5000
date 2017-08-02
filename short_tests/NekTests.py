@@ -1207,6 +1207,64 @@ class Pipe_Stenosis(NekTestCase):
         self.move_logs()
 
 ####################################################################
+#  singlerod; singlerod.rea
+####################################################################
+
+class Singlerod(NekTestCase):
+    example_subdir = 'singlerod'
+    case_name = 'singlerod'
+
+    def setUp(self):
+        self.size_params = dict(
+            lx2       = '',
+            ly2       = '',
+            lz2       = '',
+        )
+        self.build_tools(['genmap'])
+        self.run_genmap()
+
+    @pn_pn_serial
+    def test_PnPn_Serial(self):
+        self.size_params['lx2'] = 'lx1'
+        self.size_params['ly2'] = 'ly1'
+        self.size_params['lz2'] = 'lz1'
+        self.config_size(infile=os.path.join(self.examples_root, self.__class__.example_subdir, 'SIZE'))
+        if 'mcmodel' not in self.g:
+            self.g = '-mcmodel=medium {}'.format(self.g)
+        if 'mcmodel' not in self.usr_lflags:
+            self.usr_lflags = '-mcmodel=medium {}'.format(self.usr_lflags)
+        self.build_nek()
+        self.run_nek(step_limit=10)
+
+        gmres = self.get_value_from_log('gmres', column=-7)
+        self.assertAlmostEqualDelayed(gmres, target_val=0., delta=19., label='gmres (step 1)')
+        gmres = self.get_value_from_log('gmres', column=-7, row=-1)
+        self.assertAlmostEqualDelayed(gmres, target_val=0., delta=19., label='gmres (step 10)')
+        self.assertDelayedFailures()
+
+    @pn_pn_parallel
+    def test_PnPn_Parallel(self):
+        self.size_params['lx2'] = 'lx1'
+        self.size_params['ly2'] = 'ly1'
+        self.size_params['lz2'] = 'lz1'
+        self.config_size(infile=os.path.join(self.examples_root, self.__class__.example_subdir, 'SIZE'))
+        if 'mcmodel' not in self.g:
+            self.g = '-mcmodel=medium {}'.format(self.g)
+        if 'mcmodel' not in self.usr_lflags:
+            self.usr_lflags = '-mcmodel=medium {}'.format(self.usr_lflags)
+        self.build_nek()
+        self.run_nek(step_limit=10)
+
+        gmres = self.get_value_from_log('gmres', column=-7)
+        self.assertAlmostEqualDelayed(gmres, target_val=0., delta=19., label='gmres (step 1)')
+        gmres = self.get_value_from_log('gmres', column=-7, row=-1)
+        self.assertAlmostEqualDelayed(gmres, target_val=0., delta=19., label='gmres (step 10)')
+        self.assertDelayedFailures()
+
+    def tearDown(self):
+        self.move_logs()
+
+####################################################################
 #  solid; solid.rea
 ####################################################################
 
@@ -1765,5 +1823,10 @@ if __name__ == '__main__':
         os.environ['VERBOSE_TESTS'] = 'false'
         ut_verbose = 1
 
-    suite = unittest.TestSuite([unittest.TestLoader().loadTestsFromTestCase(t) for t in (Axi, Eddy_EddyUv)])
+    testNames = ['NekTests.{}.{}'.format(s,t) 
+            for s in ['ThreeDBox', 'Pipe_Stenosis', 'Solid', 'TurbChannel', 'Vortex'] 
+            for t in ['test_PnPn_Serial', 'test_PnPn_Parallel'] 
+    ]
+
+    suite = unittest.TestSuite([unittest.TestLoader().loadTestsFromNames(testNames)])
     unittest.TextTestRunner(verbosity=ut_verbose, buffer=True).run(suite)
