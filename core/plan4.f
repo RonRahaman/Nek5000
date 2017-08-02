@@ -76,10 +76,39 @@ c        call sumab_acc(vz_e,vz,vzlag,ntot1,ab,nab)
 !$ACC END PARALLEL
 
       else
-         ! add user defined divergence to qtl 
-         call add2_acc (qtl,usrdiv,ntot1)
 
-         call lagvel_acc
+!$ACC PARALLEL PRESENT(vx_e,vy_e,vz_e,vx,vy,vz,vxlag,vylag,vzlag)
+
+c        INLINED:
+c        call add2_acc (qtl,usrdiv,ntot1)
+!$ACC LOOP COLLAPSE(4)
+         do e = 1, nelv
+         do k = 1, nz1
+         do j = 1, ny1
+         do i = 1, nx1
+            qtl(i,j,k,e) = qtl(i,j,k,e) + usrdiv(i,j,k,e)
+         enddo
+         enddo
+         enddo
+         enddo
+
+c        INLINED:
+c        call lagvel_acc
+!$ACC LOOP COLLAPSE(5)
+         do ilag = 3-1 , 2, -1
+         do e = 1, nelv
+         do k = 1, nz1
+         do j = 1, ny1
+         do i = 1, nx1
+            vxlag(i,j,k,e,ilag) = vxlag(i,j,k,e,ilag-1)
+            vylag(i,j,k,e,ilag) = vylag(i,j,k,e,ilag-1)
+            vzlag(i,j,k,e,ilag) = vzlag(i,j,k,e,ilag-1)
+        enddo
+        enddo
+        enddo
+        enddo
+        enddo
+!$ACC END PARALLEL
 
          ! mask Dirichlet boundaries
 !$acc update host(vx,vy,vz)
