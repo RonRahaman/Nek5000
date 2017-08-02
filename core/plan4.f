@@ -52,9 +52,28 @@ C
          call makef_acc
 !$acc update host(bfx,bfy,bfz)
 
-         call sumab_acc(vx_e,vx,vxlag,ntot1,ab,nab)
-         call sumab_acc(vy_e,vy,vylag,ntot1,ab,nab)
-         call sumab_acc(vz_e,vz,vzlag,ntot1,ab,nab)
+c        INLINED:
+c        call sumab_acc(vx_e,vx,vxlag,ntot1,ab,nab)
+c        call sumab_acc(vy_e,vy,vylag,ntot1,ab,nab)
+c        call sumab_acc(vz_e,vz,vzlag,ntot1,ab,nab)
+
+!$ACC PARALLEL LOOP PRESENT(vx_e,vy_e,vz_e,vx,vy,vz,vxlag,vylag,vzlag)
+         do e = 1, nelv
+         do k = 1, nz1
+         do j = 1, ny1
+         do i = 1, nx1
+            ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 + (e-1)*nx1*ny1*nz1
+            vx_e(ijke) = ab(1)*vx(i,j,k,e) + ab(2)*vxlag(i,j,k,e,1) +
+     $                                       ab(3)*vxlag(i,j,k,e,2)
+            vy_e(ijke) = ab(1)*vy(i,j,k,e) + ab(2)*vylag(i,j,k,e,1) +
+     $                                       ab(3)*vylag(i,j,k,e,2)
+            vz_e(ijke) = ab(1)*vz(i,j,k,e) + ab(2)*vzlag(i,j,k,e,1) +
+     $                                       ab(3)*vzlag(i,j,k,e,2)
+         enddo
+         enddo
+         enddo
+         enddo
+!$ACC END PARALLEL
 
       else
          ! add user defined divergence to qtl 
