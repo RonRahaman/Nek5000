@@ -1,0 +1,21 @@
+      module GLOBAL_TOTAL
+      use GLOBAL_SIZE
+      implicit none
+      use GLOBAL_DXYZ
+      use GLOBAL_DEALIAS
+      use GLOBAL_EIGEN
+      use GLOBAL_GEOM
+      use GLOBAL_INPUT
+      use GLOBAL_IXYZ
+      use GLOBAL_MASS
+      use GLOBAL_MVGEOM
+      use GLOBAL_PARALLEL
+      use GLOBAL_SOLN
+      use GLOBAL_STEADY
+      use GLOBAL_TOPOL
+      use GLOBAL_TSTEP
+      use GLOBAL_TURBO
+      use GLOBAL_ESOLV
+      use GLOBAL_WZ
+      use GLOBAL_WZF
+      end module GLOBAL_TOTAL

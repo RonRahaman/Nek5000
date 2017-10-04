@@ -1,0 +1,16 @@
+      module GLOBAL_ORTHOP
+      use GLOBAL_SIZE
+      implicit none
+      integer ktotp, laxtp
+      parameter (ktotp = lx1*ly1*lz1*lelt)
+      parameter (laxtp = mxprev)
+c
+      integer         napproxp(2)
+      common /prthoi/ napproxp
+
+      real            approxp(ktotp,0:laxtp)
+      common /orthov/ approxp
+
+      character*4     name4p
+      common /prthoc/ name4p
+      end module GLOBAL_ORTHOP

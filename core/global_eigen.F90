@@ -1,0 +1,13 @@
+      module GLOBAL_EIGEN
+      use GLOBAL_SIZE
+      implicit none
+c
+c     Eigenvalues
+c
+      real eigas,eigaa,eigast,eigae,eigga,eiggs,eiggst,eigge
+      common /eigval/ eigaa, eigas, eigast, eigae
+     $               ,eigga, eiggs, eiggst, eigge
+
+      logical         ifaa,ifae,ifas,ifast,ifga,ifge,ifgs,ifgst
+      common /ifeig / ifaa,ifae,ifas,ifast,ifga,ifge,ifgs,ifgst
+      end module GLOBAL_EIGEN

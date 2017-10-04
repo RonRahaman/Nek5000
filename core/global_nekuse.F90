@@ -1,0 +1,25 @@
+      module GLOBAL_NEKUSE
+      use GLOBAL_SIZE
+      implicit none
+c
+c     Nekuse
+c
+      real x,y,z,r,theta,ux,uy,uz,un,u1,u2,trx,try,trz,trn,tr1,tr2,pa
+     $    ,p0,ffx,ffy,ffz,temp,flux,hc,hrad,tinf,qvol,udiff,utrans
+     $    ,si2,si3,sigma,turbk,turbe,ps(ldimt)
+      common /nekuse/ x  ,y  ,z  ,r  ,theta
+     $              , ux ,uy ,uz
+     $              , un ,u1 ,u2
+     $              , trx,try,trz
+     $              , trn,tr1,tr2,pa,p0
+     $              , ffx,ffy,ffz
+     $              , temp,flux,hc,hrad,tinf,qvol
+     $              , udiff,utrans
+     $              , si2,si3,sigma
+     $              , turbk,turbe
+     $              , ps
+
+      character*3     cbu
+      common /nekusc/ cbu
+
+      end module GLOBAL_NEKUSE
