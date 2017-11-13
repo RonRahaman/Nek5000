@@ -555,12 +555,8 @@ c
      $ ,             tmp2  (lx1*ly1*lz1*lelt)
      $ ,             tmp3  (lx1*ly1*lz1*lelt)
 
-      real           tm1   (lx1*ly1*lz1)
-      real           tm2   (lx1*ly1*lz1)
-      real           tm3   (lx1*ly1*lz1)
       real           duax  (lx1)
       real           ysm1  (lx1)
-      equivalence    (dudr,tm1),(duds,tm2),(dudt,tm3)
 
       integer e
       real tmpu1,tmpu2,tmpu3
@@ -645,11 +641,11 @@ c
 !$ACC END PARALLEL
 
 !FIXME: Div should also include summation
-         CALL global_div3(dxtm1,tmp1,tmp2,tmp3,tm1,tm2,tm3)
+         CALL global_div3(dxtm1,tmp1,tmp2,tmp3,dudr,duds,dudt)
 
 !$ACC PARALLEL LOOP GANG VECTOR
          do i=1,ntot
-            au(i) = tm1(i)+tm2(i)+tm3(i)
+            au(i) = dudr(i)+duds(i)+dudt(i)
          enddo
 !$ACC END PARALLEL
 
