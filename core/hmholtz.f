@@ -563,6 +563,7 @@ c
       equivalence    (dudr,tm1),(duds,tm2),(dudt,tm3)
 
       integer e
+      real tmpu1,tmpu2,tmpu3
 
       nel=nelt
       if (imesh.eq.1) nel=nelv
@@ -581,20 +582,50 @@ c
       if (.not.ifsolv) call setfast(helm1,helm2,imesh)
 
       if (ifaxis) call setaxdy ( ifrzer(e) )
- 
+
 !$ACC DATA CREATE(dudr,duds,dudt,tmp1,tmp2,tmp3)
-!$ACC&           PRESENT(g1m1,g2m1,g3m1,g4m1,g5m1,g6m1)
-!$ACC&           PRESENT(dxm1,dxtm1,au,u,helm1,helm2)
+!$ACC& PRESENT(g1m1,g2m1,g3m1,g4m1,g5m1,g6m1)
+!$ACC& PRESENT(dxm1,dxtm1,au,u,helm1,helm2)
 
       if (ndim.eq.2) then
          if(nid.eq.0) write(6,*)
      $        '2D Not currently implemented on for OpenACC'
          call exitt()
       else
+!$ACC PARALLEL 
 
-         call global_grad3(dxm1,u,dudr,duds,dudt)
-
-!$ACC PARALLEL LOOP GANG VECTOR
+!$ACC LOOP COLLAPSE(4) GANG WORKER VECTOR
+!$ACC&     PRIVATE(tmpu1,tmpu2,tmpu3)
+!$ACC&     PRIVATE(ijke)
+         do e=1,nelt
+            do k=1,nz1
+               do j=1,ny1
+                  do i=1,nx1
+                     ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
+     $                  (e-1)*nx1*ny1*nz1
+                     tmpu1 = 0.0
+                     tmpu2 = 0.0
+                     tmpu3 = 0.0
+!$ACC LOOP SEQ PRIVATE(ljke,ilke,ijle)
+                     do l=1,nx1
+                        ljke = l + (j-1)*nx1 + (k-1)*nx1*ny1 + 
+     $                     (e-1)*nx1*ny1*nz1
+                        ilke = i + (l-1)*nx1 + (k-1)*nx1*ny1 + 
+     $                     (e-1)*nx1*ny1*nz1
+                        ijle = i + (j-1)*nx1 + (l-1)*nx1*ny1 + 
+     $                     (e-1)*nx1*ny1*nz1
+                        tmpu1 = tmpu1 + dxm1(i,l)*u(ljke)
+                        tmpu2 = tmpu2 + dxm1(j,l)*u(ilke)
+                        tmpu3 = tmpu3 + dxm1(k,l)*u(ijle)
+                     enddo
+                     dudr(ijke) = tmpu1
+                     duds(ijke) = tmpu2
+                     dudt(ijke) = tmpu3
+                  enddo
+               enddo
+            enddo
+         enddo
+!$ACC LOOP GANG VECTOR
          do i=1,ntot
             tmp1(i) = helm1(i)*(
      $           + dudr(i)*g1m1(i,1,1,1)
@@ -611,7 +642,7 @@ c
      $           + dudr(i)*g5m1(i,1,1,1)
      $           + duds(i)*g6m1(i,1,1,1))
          enddo
-!$ACC END PARALLEL LOOP
+!$ACC END PARALLEL
 
 !FIXME: Div should also include summation
          CALL global_div3(dxtm1,tmp1,tmp2,tmp3,tm1,tm2,tm3)
@@ -620,16 +651,16 @@ c
          do i=1,ntot
             au(i) = tm1(i)+tm2(i)+tm3(i)
          enddo
-!$ACC END PARALLEL LOOP
+!$ACC END PARALLEL
 
       endif
 
       if (ifh2) then
-!$acc parallel loop gang vector
+!$ACC PARALLEL LOOP GANG VECTOR
          do i=1,ntot
             au(i) = au(i) + helm2(i)*bm1(i,1,1,1)*u(i)
          enddo
-!$acc end parallel
+!$ACC END PARALLEL
       endif
 
 !$ACC END DATA
