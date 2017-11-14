@@ -587,19 +587,19 @@ c
      $        '2D Not currently implemented on for OpenACC'
          call exitt()
       else
-!$acc parallel num_gangs(nelt)
+!$acc parallel num_gangs(lelt)
 !$acc loop gang
-         do e=1,nelt
+         do e=1,lelt
 !$acc loop seq
-            do k=1,nz1
-!$acc loop vector tile(nx1,ny1)
-               do j=1,ny1
-                  do i=1,nx1
+            do k=1,lz1
+!$acc loop vector tile(lx1,ly1)
+               do j=1,ly1
+                  do i=1,lx1
                      tmpu1 = 0.0
                      tmpu2 = 0.0
                      tmpu3 = 0.0
 !$acc loop seq
-                     do l=1,nx1
+                     do l=1,lx1
                         tmpu1 = tmpu1 + dxm1(i,l)*u(l,j,k,e)
                         tmpu2 = tmpu2 + dxm1(j,l)*u(i,l,k,e)
                         tmpu3 = tmpu3 + dxm1(k,l)*u(i,j,l,e)
@@ -611,10 +611,10 @@ c
                enddo
             enddo
 !$acc loop seq
-            do k=1,nz1
-!$acc loop vector tile(nx1,ny1)
-               do j=1,ny1
-                  do i=1,nx1
+            do k=1,lz1
+!$acc loop vector tile(lx1,ly1)
+               do j=1,ly1
+                  do i=1,lx1
                      tmp1(i,j,k,e) = helm1(i,j,k,e)*(
      $                    + dudr(i,j,k,e)*g1m1(i,j,k,e)
      $                    + duds(i,j,k,e)*g4m1(i,j,k,e)
@@ -633,15 +633,15 @@ c
                enddo
             enddo
 !$acc loop seq
-            do k=1,nz1
-!$acc loop vector tile(nx1,ny1) private(tmpu1,tmpu2,tmpu3)
-               do j=1,ny1
-                  do i=1,nx1
+            do k=1,lz1
+!$acc loop vector tile(lx1,ly1) private(tmpu1,tmpu2,tmpu3)
+               do j=1,ly1
+                  do i=1,lx1
                      tmpu1 = 0.0
                      tmpu2 = 0.0
                      tmpu3 = 0.0
 !$acc loop seq
-                     do l=1,nx1
+                     do l=1,lx1
                         tmpu1 = tmpu1 + dxtm1(i,l)*tmp1(l,j,k,e)
                         tmpu2 = tmpu2 + dxtm1(j,l)*tmp2(i,l,k,e)
                         tmpu3 = tmpu3 + dxtm1(k,l)*tmp3(i,j,l,e)
@@ -653,10 +653,10 @@ c
                enddo
             enddo
 !$acc loop seq
-            do k=1,nz1
-!$acc loop vector tile(nx1,ny1) private(ijke)
-               do j=1,ny1
-                  do i=1,nx1
+            do k=1,lz1
+!$acc loop vector tile(lx1,ly1)
+               do j=1,ly1
+                  do i=1,lx1
                      au(i,j,k,e) =
      $                    dudr(i,j,k,e)+duds(i,j,k,e)+dudt(i,j,k,e)
                   enddo
@@ -666,14 +666,14 @@ c
 !$acc end parallel
       endif
       if (ifh2) then
-!$acc parallel num_gangs(nelt)
+!$acc parallel num_gangs(lelt)
 !$acc loop gang
-         do e=1,nelt
+         do e=1,lelt
 !$acc loop seq
-            do k=1,nz1
-!$acc loop vector tile(nx1,ny1) private(ijke)
-               do j=1,ny1
-                  do i=1,nx1
+            do k=1,lz1
+!$acc loop vector tile(lx1,ly1)
+               do j=1,ly1
+                  do i=1,lx1
                      au(i,j,k,e) = au(i,j,k,e) +
      $                  helm2(i,j,k,e)*bm1(i,j,k,e)*u(i,j,k,e)
                   enddo
