@@ -582,13 +582,11 @@ c
 !$ACC DATA CREATE(dudr,duds,dudt,tmp1,tmp2,tmp3)
 !$ACC& PRESENT(g1m1,g2m1,g3m1,g4m1,g5m1,g6m1)
 !$ACC& PRESENT(dxm1,dxtm1,au,u,helm1,helm2)
-
       if (ndim.eq.2) then
          if(nid.eq.0) write(6,*)
      $        '2D Not currently implemented on for OpenACC'
          call exitt()
       else
-
 !$acc parallel num_gangs(nelt)
 !$acc loop gang
          do e=1,nelt
@@ -621,82 +619,91 @@ c
                enddo
             enddo
 !$acc loop seq
-         do k=1,nz1
+            do k=1,nz1
 !$acc loop vector tile(nx1,ny1) private(ijke)
-            do j=1,ny1
-               do i=1,nx1
-                  ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
-     $               (e-1)*nx1*ny1*nz1
-                  tmp1(ijke) = helm1(ijke)*(
-     $                 + dudr(ijke)*g1m1(i,j,k,e)
-     $                 + duds(ijke)*g4m1(i,j,k,e)
-     $                 + dudt(ijke)*g5m1(i,j,k,e))
+               do j=1,ny1
+                  do i=1,nx1
+                     ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
+     $                  (e-1)*nx1*ny1*nz1
+                     tmp1(ijke) = helm1(ijke)*(
+     $                    + dudr(ijke)*g1m1(i,j,k,e)
+     $                    + duds(ijke)*g4m1(i,j,k,e)
+     $                    + dudt(ijke)*g5m1(i,j,k,e))
 
-                  tmp2(ijke) = helm1(ijke)*(
-     $                 + duds(ijke)*g2m1(i,j,k,e)
-     $                 + dudr(ijke)*g4m1(i,j,k,e)
-     $                 + dudt(ijke)*g6m1(i,j,k,e))
+                     tmp2(ijke) = helm1(ijke)*(
+     $                    + duds(ijke)*g2m1(i,j,k,e)
+     $                    + dudr(ijke)*g4m1(i,j,k,e)
+     $                    + dudt(ijke)*g6m1(i,j,k,e))
 
-                  tmp3(ijke) = helm1(ijke)*(
-     $                 + dudt(ijke)*g3m1(i,j,k,e)
-     $                 + dudr(ijke)*g5m1(i,j,k,e)
-     $                 + duds(ijke)*g6m1(i,j,k,e))
-               enddo
-            enddo
-         enddo
-!$acc loop seq
-         do k=1,nz1
-!$acc loop vector tile(nx1,ny1) private(tmpu1,tmpu2,tmpu3,ijke)
-            do j=1,ny1
-               do i=1,nx1
-                  ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
-     $               (e-1)*nx1*ny1*nz1
-                  tmpu1 = 0.0
-                  tmpu2 = 0.0
-                  tmpu3 = 0.0
-!$acc loop seq private(ljke,ilke,ijle)
-                  do l=1,nx1
-                     ljke = l + (j-1)*nx1 + (k-1)*nx1*ny1 + 
-     $                  (e-1)*nx1*ny1*nz1
-                     ilke = i + (l-1)*nx1 + (k-1)*nx1*ny1 + 
-     $                  (e-1)*nx1*ny1*nz1
-                     ijle = i + (j-1)*nx1 + (l-1)*nx1*ny1 + 
-     $                  (e-1)*nx1*ny1*nz1
-                     tmpu1 = tmpu1 + dxtm1(i,l)*tmp1(ljke)
-                     tmpu2 = tmpu2 + dxtm1(j,l)*tmp2(ilke)
-                     tmpu3 = tmpu3 + dxtm1(k,l)*tmp3(ijle)
+                     tmp3(ijke) = helm1(ijke)*(
+     $                    + dudt(ijke)*g3m1(i,j,k,e)
+     $                    + dudr(ijke)*g5m1(i,j,k,e)
+     $                    + duds(ijke)*g6m1(i,j,k,e))
                   enddo
-                  dudr(ijke) = tmpu1
-                  duds(ijke) = tmpu2
-                  dudt(ijke) = tmpu3
                enddo
             enddo
-         enddo
 !$acc loop seq
-         do k=1,nz1
+            do k=1,nz1
+!$acc loop vector tile(nx1,ny1) private(tmpu1,tmpu2,tmpu3,ijke)
+               do j=1,ny1
+                  do i=1,nx1
+                     ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
+     $                  (e-1)*nx1*ny1*nz1
+                     tmpu1 = 0.0
+                     tmpu2 = 0.0
+                     tmpu3 = 0.0
+!$acc loop seq private(ljke,ilke,ijle)
+                     do l=1,nx1
+                        ljke = l + (j-1)*nx1 + (k-1)*nx1*ny1 + 
+     $                     (e-1)*nx1*ny1*nz1
+                        ilke = i + (l-1)*nx1 + (k-1)*nx1*ny1 + 
+     $                     (e-1)*nx1*ny1*nz1
+                        ijle = i + (j-1)*nx1 + (l-1)*nx1*ny1 + 
+     $                     (e-1)*nx1*ny1*nz1
+                        tmpu1 = tmpu1 + dxtm1(i,l)*tmp1(ljke)
+                        tmpu2 = tmpu2 + dxtm1(j,l)*tmp2(ilke)
+                        tmpu3 = tmpu3 + dxtm1(k,l)*tmp3(ijle)
+                     enddo
+                     dudr(ijke) = tmpu1
+                     duds(ijke) = tmpu2
+                     dudt(ijke) = tmpu3
+                  enddo
+               enddo
+            enddo
+!$acc loop seq
+            do k=1,nz1
 !$acc loop vector tile(nx1,ny1) private(ijke)
-            do j=1,ny1
-               do i=1,nx1
-                  ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
-     $               (e-1)*nx1*ny1*nz1
-                  au(ijke) = dudr(ijke)+duds(ijke)+dudt(ijke)
+               do j=1,ny1
+                  do i=1,nx1
+                     ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
+     $                  (e-1)*nx1*ny1*nz1
+                     au(ijke) = dudr(ijke)+duds(ijke)+dudt(ijke)
+                  enddo
                enddo
             enddo
          enddo
-      enddo
 !$acc end parallel
-
       endif
-
       if (ifh2) then
-!$ACC PARALLEL LOOP GANG VECTOR
-         do i=1,ntot
-            au(i) = au(i) + helm2(i)*bm1(i,1,1,1)*u(i)
+!$acc parallel num_gangs(nelt)
+!$acc loop gang
+         do e=1,nelt
+!$acc loop seq
+            do k=1,nz1
+!$acc loop vector tile(nx1,ny1) private(ijke)
+               do j=1,ny1
+                  do i=1,nx1
+                     ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
+     $                  (e-1)*nx1*ny1*nz1
+                     au(ijke) = au(ijke) +
+     $                  helm2(ijke)*bm1(i,j,k,e)*u(ijke)
+                  enddo
+               enddo
+            enddo
          enddo
-!$ACC END PARALLEL
+!$acc end parallel
       endif
-
-!$ACC END DATA
+!$acc end data
  
 c     if axisymmetric, add a diagonal term in the radial direction (isd=2)
  
