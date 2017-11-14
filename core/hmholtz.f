@@ -653,40 +653,48 @@ c
 !$acc parallel loop collapse(4) gang worker vector
 !$acc&    private(tmpu1,tmpu2,tmpu3,ijke)
       do e=1,nelv
-      do k=1,nz1
-      do j=1,ny1
-      do i=1,nx1
-         ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
-     $      (e-1)*nx1*ny1*nz1
-         tmpu1 = 0.0
-         tmpu2 = 0.0
-         tmpu3 = 0.0
+         do k=1,nz1
+            do j=1,ny1
+               do i=1,nx1
+                  ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
+     $               (e-1)*nx1*ny1*nz1
+                  tmpu1 = 0.0
+                  tmpu2 = 0.0
+                  tmpu3 = 0.0
 !$ACC LOOP SEQ PRIVATE(ljke,ilke,ijle)
-         do l=1,nx1
-            ljke = l + (j-1)*nx1 + (k-1)*nx1*ny1 + 
-     $         (e-1)*nx1*ny1*nz1
-            ilke = i + (l-1)*nx1 + (k-1)*nx1*ny1 + 
-     $         (e-1)*nx1*ny1*nz1
-            ijle = i + (j-1)*nx1 + (l-1)*nx1*ny1 + 
-     $         (e-1)*nx1*ny1*nz1
-            tmpu1 = tmpu1 + dxtm1(i,l)*tmp1(ljke)
-            tmpu2 = tmpu2 + dxtm1(j,l)*tmp2(ilke)
-            tmpu3 = tmpu3 + dxtm1(k,l)*tmp3(ijle)
+                  do l=1,nx1
+                     ljke = l + (j-1)*nx1 + (k-1)*nx1*ny1 + 
+     $                  (e-1)*nx1*ny1*nz1
+                     ilke = i + (l-1)*nx1 + (k-1)*nx1*ny1 + 
+     $                  (e-1)*nx1*ny1*nz1
+                     ijle = i + (j-1)*nx1 + (l-1)*nx1*ny1 + 
+     $                  (e-1)*nx1*ny1*nz1
+                     tmpu1 = tmpu1 + dxtm1(i,l)*tmp1(ljke)
+                     tmpu2 = tmpu2 + dxtm1(j,l)*tmp2(ilke)
+                     tmpu3 = tmpu3 + dxtm1(k,l)*tmp3(ijle)
+                  enddo
+!$acc end loop
+                  dudr(ijke) = tmpu1
+                  duds(ijke) = tmpu2
+                  dudt(ijke) = tmpu3
+               enddo
+            enddo
          enddo
-!$acc    end loop
-         dudr(ijke) = tmpu1
-         duds(ijke) = tmpu2
-         dudt(ijke) = tmpu3
-      enddo
-      enddo
-      enddo
       enddo
 !$acc end parallel loop
 
 !$ACC PARALLEL LOOP GANG VECTOR
-         do i=1,ntot
-            au(i) = dudr(i)+duds(i)+dudt(i)
+      do e=1,nelv
+         do k=1,nz1
+            do j=1,ny1
+               do i=1,nx1
+                  ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
+     $               (e-1)*nx1*ny1*nz1
+                  au(ijke) = dudr(ijke)+duds(ijke)+dudt(ijke)
+               enddo
+            enddo
          enddo
+      enddo
 !$ACC END PARALLEL
 
       endif
