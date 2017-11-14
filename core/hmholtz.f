@@ -548,12 +548,7 @@ c
      $ ,             helm1 (lx1,ly1,lz1,lelt)
      $ ,             helm2 (lx1,ly1,lz1,lelt)
 
-      real           dudr  (lx1,ly1,lz1,lelt)
-     $ ,             duds  (lx1,ly1,lz1,lelt)
-     $ ,             dudt  (lx1,ly1,lz1,lelt)
-     $ ,             tmp1  (lx1,ly1,lz1,lelt)
-     $ ,             tmp2  (lx1,ly1,lz1,lelt)
-     $ ,             tmp3  (lx1,ly1,lz1,lelt)
+      real           tmp3  (lx1,ly1,lz1,lelt)
 
       real           duax  (lx1)
       real           ysm1  (lx1)
@@ -583,7 +578,7 @@ c
 
       if (ifaxis) call setaxdy ( ifrzer(e) )
 
-!$ACC DATA CREATE(dudr,duds,dudt,tmp1,tmp2,tmp3)
+!$ACC DATA CREATE(tmp3)
 !$ACC& PRESENT(g1m1,g2m1,g3m1,g4m1,g5m1,g6m1)
 !$ACC& PRESENT(dxm1,au,u,helm1,helm2)
       if (ndim.eq.2) then
@@ -607,9 +602,9 @@ c
                do j=1,ly1
                   do i=1,lx1
                      s_u_ur(i,j) = u(i,j,k,e)
-                  enddo !i
-               enddo !j
-!$acc loop vector tile(lx1,ly1)
+                  enddo
+               enddo
+!$acc loop vector tile(lx1,ly1) private(tmpu1,tmpu2,tmpu3)
                do j=1,ly1
                   do i=1,lx1
                      tmpu1 = 0.0
@@ -621,46 +616,43 @@ c
                         tmpu2 = tmpu2 + s_dxm1(j,l)*s_u_ur(i,l)
                         tmpu3 = tmpu3 + s_dxm1(k,l)*u(i,j,l,e)
                      enddo
-                     s_u_ur(i,j) = helm1(i,j,k,e)*(
-     $                    + tmpu1*g1m1(i,j,k,e)
-     $                    + tmpu2*g4m1(i,j,k,e)
-     $                    + tmpu3*g5m1(i,j,k,e))
-                     s_us(i,j) = helm1(i,j,k,e)*(
-     $                    + tmpu2*g2m1(i,j,k,e)
-     $                    + tmpu1*g4m1(i,j,k,e)
-     $                    + tmpu3*g6m1(i,j,k,e))
-
+                     s_u_ur(i,j)   = helm1(i,j,k,e)*(
+     $                             + tmpu1*g1m1(i,j,k,e)
+     $                             + tmpu2*g4m1(i,j,k,e)
+     $                             + tmpu3*g5m1(i,j,k,e))
+                     s_us(i,j)     = helm1(i,j,k,e)*(
+     $                             + tmpu2*g2m1(i,j,k,e)
+     $                             + tmpu1*g4m1(i,j,k,e)
+     $                             + tmpu3*g6m1(i,j,k,e))
                      tmp3(i,j,k,e) = helm1(i,j,k,e)*(
-     $                    + tmpu3*g3m1(i,j,k,e)
-     $                    + tmpu1*g5m1(i,j,k,e)
-     $                    + tmpu2*g6m1(i,j,k,e))
-
+     $                             + tmpu3*g3m1(i,j,k,e)
+     $                             + tmpu1*g5m1(i,j,k,e)
+     $                             + tmpu2*g6m1(i,j,k,e))
                   enddo
                enddo
-!$acc loop vector tile(lx1,ly1)
+!$acc loop vector tile(lx1,ly1) private(tmpu1)
                do j=1,ly1
                   do i=1,lx1
                      tmpu1 = 0.0
-                     tmpu2 = 0.0
 !$acc loop seq
                      do l=1,lx1
                         tmpu1 = tmpu1 + s_dxm1(l,i)*s_u_ur(l,j)
-                        tmpu2 = tmpu2 + s_dxm1(l,j)*s_us(i,l)
+     $                                + s_dxm1(l,j)*s_us(i,l)
                      enddo
-                     au(i,j,k,e) = tmpu1 + tmpu2
+                     au(i,j,k,e) = tmpu1
                   enddo
                enddo
             enddo
 !$acc loop seq
             do k=1,lz1
-!$acc loop vector tile(lx1,ly1)
+!$acc loop vector tile(lx1,ly1) private(tmpu3)
                do j=1,ly1
                   do i=1,lx1
-                     tmpu3 = 0.0
+                     tmpu3 = au(i,j,k,e)
                      do l=1,lx1
                         tmpu3 = tmpu3 + s_dxm1(l,k)*tmp3(i,j,l,e)
                      enddo
-                     au(i,j,k,e) = au(i,j,k,e) + tmpu3
+                     au(i,j,k,e) = tmpu3
                   enddo
                enddo
             enddo
