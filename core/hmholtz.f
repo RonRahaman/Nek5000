@@ -613,31 +613,20 @@ c
                         tmpu2 = tmpu2 + s_dxm1(j,l)*u(i,l,k,e)
                         tmpu3 = tmpu3 + s_dxm1(k,l)*u(i,j,l,e)
                      enddo
-                     dudr(i,j,k,e) = tmpu1
-                     duds(i,j,k,e) = tmpu2
-                     dudt(i,j,k,e) = tmpu3
-                  enddo
-               enddo
-            enddo
-!$acc loop seq
-            do k=1,lz1
-!$acc loop vector tile(lx1,ly1)
-               do j=1,ly1
-                  do i=1,lx1
                      tmp1(i,j,k,e) = helm1(i,j,k,e)*(
-     $                    + dudr(i,j,k,e)*g1m1(i,j,k,e)
-     $                    + duds(i,j,k,e)*g4m1(i,j,k,e)
-     $                    + dudt(i,j,k,e)*g5m1(i,j,k,e))
+     $                    + tmpu1*g1m1(i,j,k,e)
+     $                    + tmpu2*g4m1(i,j,k,e)
+     $                    + tmpu3*g5m1(i,j,k,e))
 
                      tmp2(i,j,k,e) = helm1(i,j,k,e)*(
-     $                    + duds(i,j,k,e)*g2m1(i,j,k,e)
-     $                    + dudr(i,j,k,e)*g4m1(i,j,k,e)
-     $                    + dudt(i,j,k,e)*g6m1(i,j,k,e))
+     $                    + tmpu2*g2m1(i,j,k,e)
+     $                    + tmpu1*g4m1(i,j,k,e)
+     $                    + tmpu3*g6m1(i,j,k,e))
 
                      tmp3(i,j,k,e) = helm1(i,j,k,e)*(
-     $                    + dudt(i,j,k,e)*g3m1(i,j,k,e)
-     $                    + dudr(i,j,k,e)*g5m1(i,j,k,e)
-     $                    + duds(i,j,k,e)*g6m1(i,j,k,e))
+     $                    + tmpu3*g3m1(i,j,k,e)
+     $                    + tmpu1*g5m1(i,j,k,e)
+     $                    + tmpu2*g6m1(i,j,k,e))
                   enddo
                enddo
             enddo
