@@ -559,6 +559,7 @@ c
       real           ysm1  (lx1)
 
       real s_dxm1(lx1+1,ly1)
+      real s_u_ur(lx1+1,ly1)
 
       integer e
       real tmpu1,tmpu2,tmpu3
@@ -590,9 +591,9 @@ c
          call exitt()
       else
 !$acc parallel num_gangs(lelt)
-!$acc loop gang private(s_dxm1)
+!$acc loop gang private(s_dxm1,s_u_ur)
          do e=1,lelt
-!$acc cache(s_dxm1)
+!$acc cache(s_dxm1,s_u_ur)
 !$acc loop vector tile(lx1,ly1)
             do j=1,ly1
                do i=1,lx1
@@ -604,16 +605,22 @@ c
 !$acc loop vector tile(lx1,ly1)
                do j=1,ly1
                   do i=1,lx1
+                     s_u_ur(i,j) = u(i,j,k,e)
+                  enddo !i
+               enddo !j
+!$acc loop vector tile(lx1,ly1)
+               do j=1,ly1
+                  do i=1,lx1
                      tmpu1 = 0.0
                      tmpu2 = 0.0
                      tmpu3 = 0.0
 !$acc loop seq
                      do l=1,lx1
-                        tmpu1 = tmpu1 + s_dxm1(i,l)*u(l,j,k,e)
-                        tmpu2 = tmpu2 + s_dxm1(j,l)*u(i,l,k,e)
+                        tmpu1 = tmpu1 + s_dxm1(i,l)*s_u_ur(l,j)
+                        tmpu2 = tmpu2 + s_dxm1(j,l)*s_u_ur(i,l)
                         tmpu3 = tmpu3 + s_dxm1(k,l)*u(i,j,l,e)
                      enddo
-                     tmp1(i,j,k,e) = helm1(i,j,k,e)*(
+                     s_u_ur(i,j) = helm1(i,j,k,e)*(
      $                    + tmpu1*g1m1(i,j,k,e)
      $                    + tmpu2*g4m1(i,j,k,e)
      $                    + tmpu3*g5m1(i,j,k,e))
@@ -638,7 +645,7 @@ c
 !$acc loop seq
                      do l=1,lx1
                         dudr(i,j,k,e) = dudr(i,j,k,e) 
-     $                     + s_dxm1(l,i)*tmp1(l,j,k,e)
+     $                     + s_dxm1(l,i)*s_u_ur(l,j)
                         duds(i,j,k,e) = duds(i,j,k,e) 
      $                     + s_dxm1(l,j)*tmp2(i,l,k,e)
                      enddo
