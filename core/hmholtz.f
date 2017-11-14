@@ -583,7 +583,7 @@ c
 
 !$ACC DATA CREATE(dudr,duds,dudt,tmp1,tmp2,tmp3)
 !$ACC& PRESENT(g1m1,g2m1,g3m1,g4m1,g5m1,g6m1)
-!$ACC& PRESENT(dxm1,dxtm1,au,u,helm1,helm2)
+!$ACC& PRESENT(dxm1,au,u,helm1,helm2)
       if (ndim.eq.2) then
          if(nid.eq.0) write(6,*)
      $        '2D Not currently implemented on for OpenACC'
@@ -592,13 +592,13 @@ c
 !$acc parallel num_gangs(lelt)
 !$acc loop gang private(s_dxm1)
          do e=1,lelt
+!$acc cache(s_dxm1)
 !$acc loop vector tile(lx1,ly1)
             do j=1,ly1
                do i=1,lx1
                   s_dxm1(i,j) = dxm1(i,j)
                enddo
             enddo
-!$acc cache(s_dxm1)
 !$acc loop seq
             do k=1,lz1
 !$acc loop vector tile(lx1,ly1)
@@ -632,7 +632,7 @@ c
             enddo
 !$acc loop seq
             do k=1,lz1
-!$acc loop vector tile(lx1,ly1) private(tmpu1,tmpu2,tmpu3)
+!$acc loop vector tile(lx1,ly1)
                do j=1,ly1
                   do i=1,lx1
                      dudr(i,j,k,e) = 0.0
