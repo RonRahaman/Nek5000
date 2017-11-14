@@ -621,22 +621,30 @@ c
                enddo
             enddo
          enddo
-!$ACC LOOP GANG VECTOR
-         do i=1,ntot
-            tmp1(i) = helm1(i)*(
-     $           + dudr(i)*g1m1(i,1,1,1)
-     $           + duds(i)*g4m1(i,1,1,1)
-     $           + dudt(i)*g5m1(i,1,1,1))
+!$ACC LOOP COLLAPSE(4) GANG VECTOR
+         do e=1,nelt
+            do k=1,nz1
+               do j=1,ny1
+                  do i=1,nx1
+                     ijke = i + (j-1)*nx1 + (k-1)*nx1*ny1 +
+     $                  (e-1)*nx1*ny1*nz1
+                     tmp1(ijke) = helm1(ijke)*(
+     $                    + dudr(ijke)*g1m1(i,j,k,e)
+     $                    + duds(ijke)*g4m1(i,j,k,e)
+     $                    + dudt(ijke)*g5m1(i,j,k,e))
 
-            tmp2(i) = helm1(i)*(
-     $           + duds(i)*g2m1(i,1,1,1)
-     $           + dudr(i)*g4m1(i,1,1,1)
-     $           + dudt(i)*g6m1(i,1,1,1))
+                     tmp2(ijke) = helm1(ijke)*(
+     $                    + duds(ijke)*g2m1(i,j,k,e)
+     $                    + dudr(ijke)*g4m1(i,j,k,e)
+     $                    + dudt(ijke)*g6m1(i,j,k,e))
 
-            tmp3(i) = helm1(i)*(
-     $           + dudt(i)*g3m1(i,1,1,1)
-     $           + dudr(i)*g5m1(i,1,1,1)
-     $           + duds(i)*g6m1(i,1,1,1))
+                     tmp3(ijke) = helm1(ijke)*(
+     $                    + dudt(ijke)*g3m1(i,j,k,e)
+     $                    + dudr(ijke)*g5m1(i,j,k,e)
+     $                    + duds(ijke)*g6m1(i,j,k,e))
+                  enddo
+               enddo
+            enddo
          enddo
 !$ACC END PARALLEL
 
