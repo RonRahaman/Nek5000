@@ -558,6 +558,8 @@ c
       real           duax  (lx1)
       real           ysm1  (lx1)
 
+      real s_dxm1(lx1+1,ly1)
+
       integer e
       real tmpu1,tmpu2,tmpu3
 
@@ -588,8 +590,15 @@ c
          call exitt()
       else
 !$acc parallel num_gangs(lelt)
-!$acc loop gang
+!$acc loop gang private(s_dxm1)
          do e=1,lelt
+!$acc loop vector tile(lx1,ly1)
+            do j=1,ly1
+               do i=1,lx1
+                  s_dxm1(i,j) = dxm1(i,j)
+               enddo
+            enddo
+!$acc cache(s_dxm1)
 !$acc loop seq
             do k=1,lz1
 !$acc loop vector tile(lx1,ly1)
@@ -600,9 +609,9 @@ c
                      tmpu3 = 0.0
 !$acc loop seq
                      do l=1,lx1
-                        tmpu1 = tmpu1 + dxm1(i,l)*u(l,j,k,e)
-                        tmpu2 = tmpu2 + dxm1(j,l)*u(i,l,k,e)
-                        tmpu3 = tmpu3 + dxm1(k,l)*u(i,j,l,e)
+                        tmpu1 = tmpu1 + s_dxm1(i,l)*u(l,j,k,e)
+                        tmpu2 = tmpu2 + s_dxm1(j,l)*u(i,l,k,e)
+                        tmpu3 = tmpu3 + s_dxm1(k,l)*u(i,j,l,e)
                      enddo
                      dudr(i,j,k,e) = tmpu1
                      duds(i,j,k,e) = tmpu2
@@ -642,9 +651,9 @@ c
                      tmpu3 = 0.0
 !$acc loop seq
                      do l=1,lx1
-                        tmpu1 = tmpu1 + dxtm1(i,l)*tmp1(l,j,k,e)
-                        tmpu2 = tmpu2 + dxtm1(j,l)*tmp2(i,l,k,e)
-                        tmpu3 = tmpu3 + dxtm1(k,l)*tmp3(i,j,l,e)
+                        tmpu1 = tmpu1 + s_dxm1(l,i)*tmp1(l,j,k,e)
+                        tmpu2 = tmpu2 + s_dxm1(l,j)*tmp2(i,l,k,e)
+                        tmpu3 = tmpu3 + s_dxm1(l,k)*tmp3(i,j,l,e)
                      enddo
                      dudr(i,j,k,e) = tmpu1
                      duds(i,j,k,e) = tmpu2
