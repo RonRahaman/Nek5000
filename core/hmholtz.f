@@ -560,6 +560,7 @@ c
 
       real s_dxm1(lx1+1,ly1)
       real s_u_ur(lx1+1,ly1)
+      real s_us(lx1+1,ly1)
 
       integer e
       real tmpu1,tmpu2,tmpu3
@@ -591,9 +592,9 @@ c
          call exitt()
       else
 !$acc parallel num_gangs(lelt)
-!$acc loop gang private(s_dxm1,s_u_ur)
+!$acc loop gang private(s_dxm1,s_u_ur,s_us)
          do e=1,lelt
-!$acc cache(s_dxm1,s_u_ur)
+!$acc cache(s_dxm1,s_u_ur,s_us)
 !$acc loop vector tile(lx1,ly1)
             do j=1,ly1
                do i=1,lx1
@@ -624,11 +625,10 @@ c
      $                    + tmpu1*g1m1(i,j,k,e)
      $                    + tmpu2*g4m1(i,j,k,e)
      $                    + tmpu3*g5m1(i,j,k,e))
-                     tmp2(i,j,k,e) = helm1(i,j,k,e)*(
+                     s_us(i,j) = helm1(i,j,k,e)*(
      $                    + tmpu2*g2m1(i,j,k,e)
      $                    + tmpu1*g4m1(i,j,k,e)
      $                    + tmpu3*g6m1(i,j,k,e))
-
 
                      tmp3(i,j,k,e) = helm1(i,j,k,e)*(
      $                    + tmpu3*g3m1(i,j,k,e)
@@ -645,7 +645,7 @@ c
 !$acc loop seq
                      do l=1,lx1
                         tmpu1 = tmpu1 + s_dxm1(l,i)*s_u_ur(l,j)
-                        tmpu2 = tmpu2 + s_dxm1(l,j)*tmp2(i,l,k,e)
+                        tmpu2 = tmpu2 + s_dxm1(l,j)*s_us(i,l)
                      enddo
                      au(i,j,k,e) = tmpu1 + tmpu2
                   enddo
