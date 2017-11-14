@@ -640,16 +640,14 @@ c
 !$acc loop vector tile(lx1,ly1)
                do j=1,ly1
                   do i=1,lx1
-                     dudr(i,j,k,e) = 0.0
-                     duds(i,j,k,e) = 0.0
+                     tmpu1 = 0.0
+                     tmpu2 = 0.0
 !$acc loop seq
                      do l=1,lx1
-                        dudr(i,j,k,e) = dudr(i,j,k,e) 
-     $                     + s_dxm1(l,i)*s_u_ur(l,j)
-                        duds(i,j,k,e) = duds(i,j,k,e) 
-     $                     + s_dxm1(l,j)*tmp2(i,l,k,e)
+                        tmpu1 = tmpu1 + s_dxm1(l,i)*s_u_ur(l,j)
+                        tmpu2 = tmpu2 + s_dxm1(l,j)*tmp2(i,l,k,e)
                      enddo
-                     au(i,j,k,e) = dudr(i,j,k,e) + duds(i,j,k,e)
+                     au(i,j,k,e) = tmpu1 + tmpu2
                   enddo
                enddo
             enddo
@@ -658,12 +656,11 @@ c
 !$acc loop vector tile(lx1,ly1)
                do j=1,ly1
                   do i=1,lx1
-                     dudt(i,j,k,e) = 0.0
+                     tmpu3 = 0.0
                      do l=1,lx1
-                        dudt(i,j,k,e) = dudt(i,j,k,e) 
-     $                     + s_dxm1(l,k)*tmp3(i,j,l,e)
+                        tmpu3 = tmpu3 + s_dxm1(l,k)*tmp3(i,j,l,e)
                      enddo
-                     au(i,j,k,e) = au(i,j,k,e) + dudt(i,j,k,e)
+                     au(i,j,k,e) = au(i,j,k,e) + tmpu3
                   enddo
                enddo
             enddo
