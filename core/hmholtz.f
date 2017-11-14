@@ -646,18 +646,18 @@ c
 !$acc loop vector tile(lx1,ly1) private(tmpu1,tmpu2,tmpu3)
                do j=1,ly1
                   do i=1,lx1
-                     tmpu1 = 0.0
-                     tmpu2 = 0.0
-                     tmpu3 = 0.0
+                     dudr(i,j,k,e) = 0.0
+                     duds(i,j,k,e) = 0.0
+                     dudt(i,j,k,e) = 0.0
 !$acc loop seq
                      do l=1,lx1
-                        tmpu1 = tmpu1 + s_dxm1(l,i)*tmp1(l,j,k,e)
-                        tmpu2 = tmpu2 + s_dxm1(l,j)*tmp2(i,l,k,e)
-                        tmpu3 = tmpu3 + s_dxm1(l,k)*tmp3(i,j,l,e)
+                        dudr(i,j,k,e) = dudr(i,j,k,e) 
+     $                     + s_dxm1(l,i)*tmp1(l,j,k,e)
+                        duds(i,j,k,e) = duds(i,j,k,e) 
+     $                     + s_dxm1(l,j)*tmp2(i,l,k,e)
+                        dudt(i,j,k,e) = dudt(i,j,k,e) 
+     $                     + s_dxm1(l,k)*tmp3(i,j,l,e)
                      enddo
-                     dudr(i,j,k,e) = tmpu1
-                     duds(i,j,k,e) = tmpu2
-                     dudt(i,j,k,e) = tmpu3
                   enddo
                enddo
             enddo
