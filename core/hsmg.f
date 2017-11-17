@@ -1088,11 +1088,11 @@ c     clobbers r
       subroutine hsmg_do_fast_acc(e,r,s,d,nl)
       include 'SIZE'
       include 'INPUT'
-      integer nl,lwk
       real e(nl**ndim,nelt)
       real r(nl**ndim,nelt)
       real s(nl*nl,2,ndim,nelt)
       real d(nl**ndim,nelt)
+      integer nl
       integer ie,nn,i,j,k,l,i0,j0,k0,je,nu,nv,lwk
       parameter (lwk=(lx1+2)*(ly1+2)*(lz1+2))
       real tmp
