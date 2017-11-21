@@ -634,24 +634,33 @@ c     exchange interior nodes
          call hsmg_extrude(mg_work,0,zero,mg_work,2,one,enx,eny,enz)
          call hsmg_schwarz_dssum(mg_work,l)
          call hsmg_extrude(mg_work,0,one ,mg_work,2,onem,enx,eny,enz)
+
+         call hsmg_fdm(mg_work(i),mg_work,l) ! Do the local solves
+
+c        Sum overlap region (border excluded)
+         call hsmg_extrude(mg_work,0,zero,mg_work(i),0,one,enx,eny,enz)
+         call hsmg_schwarz_dssum2(mg_work(i),l,mg_work_size)
+         call hsmg_extrude(mg_work(i),0,one ,mg_work,0,onem,enx,eny,enz)
+         call hsmg_extrude(mg_work(i),2,one,mg_work(i),0,
+     $      one,enx,eny,enz)
+
+         call hsmg_schwarz_toreg2d(e,mg_work(i),mg_nh(l))
       else
          call hsmg_extrude_acc_1(mg_work,enx,eny,enz)
          call hsmg_schwarz_dssum(mg_work,l)
          call hsmg_extrude_acc_2(mg_work,enx,eny,enz)
-      endif
 
-      call hsmg_fdm(mg_work(i),mg_work,l) ! Do the local solves
+         call hsmg_fdm(mg_work(i),mg_work,l) ! Do the local solves
 
-c     Sum overlap region (border excluded)
-      call hsmg_extrude(mg_work,0,zero,mg_work(i),0,one ,enx,eny,enz)
-      call hsmg_schwarz_dssum2(mg_work(i),l,mg_work_size)
-      call hsmg_extrude(mg_work(i),0,one ,mg_work,0,onem,enx,eny,enz)
-      call hsmg_extrude(mg_work(i),2,one,mg_work(i),0,one,enx,eny,enz)
+c        Sum overlap region (border excluded)
+         call hsmg_extrude(mg_work,0,zero,mg_work(i),0,one ,enx,eny,enz)
+         call hsmg_schwarz_dssum2(mg_work(i),l,mg_work_size)
+         call hsmg_extrude(mg_work(i),0,one ,mg_work,0,onem,enx,eny,enz)
+         call hsmg_extrude(mg_work(i),2,one,mg_work(i),0,
+     $      one,enx,eny,enz)
 
-      if(.not.if3d) then ! Go back to regular size array
-         call hsmg_schwarz_toreg2d(e,mg_work(i),mg_nh(l))
-      else
          call hsmg_schwarz_toreg3d(e,mg_work(i),mg_nh(l))
+
       endif
 
       call hsmg_dssum(e,l)                           ! sum border nodes
@@ -4108,8 +4117,6 @@ c----------------------------------------------------------------------
      $                        arr1(nx-2,j,k,ie)
          enddo
          enddo
-!$ACC END LOOP
-
 !$ACC LOOP VECTOR COLLAPSE(2)
          do k=i0,i1
          do i=i0,i1
@@ -4119,8 +4126,6 @@ c----------------------------------------------------------------------
      $                        arr1(i,nx-2,k,ie)
          enddo
          enddo
-!$ACC END LOOP
-
 !$ACC LOOP VECTOR COLLAPSE(2)
          do j=i0,i1
          do i=i0,i1
