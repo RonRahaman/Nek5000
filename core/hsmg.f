@@ -630,9 +630,15 @@ c----------------------------------------------------------------------
       i = enx*eny*enz*nelv+1
  
 c     exchange interior nodes
-      call hsmg_extrude(mg_work,0,zero,mg_work,2,one,enx,eny,enz)
-      call hsmg_schwarz_dssum(mg_work,l)
-      call hsmg_extrude(mg_work,0,one ,mg_work,2,onem,enx,eny,enz)
+      if (.not. if3d) then
+         call hsmg_extrude(mg_work,0,zero,mg_work,2,one,enx,eny,enz)
+         call hsmg_schwarz_dssum(mg_work,l)
+         call hsmg_extrude(mg_work,0,one ,mg_work,2,onem,enx,eny,enz)
+      else
+         call hsmg_extrude_acc_1(mg_work,enx,eny,enz)
+         call hsmg_schwarz_dssum(mg_work,l)
+         call hsmg_extrude(mg_work,0,one ,mg_work,2,onem,enx,eny,enz)
+      endif
 
       call hsmg_fdm(mg_work(i),mg_work,l) ! Do the local solves
 
@@ -687,6 +693,7 @@ c     go to extended size array (room for overlap)
       i = enx*eny*enz*nelv+1
 
 c     exchange interior nodes
+
       call hsmg_extrude(mg_work,0,zero,mg_work,2,one,enx,eny,enz)
       call hsmg_schwarz_dssum(mg_work,l)
       call hsmg_extrude(mg_work,0,one ,mg_work,2,onem,enx,eny,enz)
@@ -4037,6 +4044,45 @@ c        call outmat(mg_work(k),nx,ny,'NEW WT',ie)
       enddo
 c     stop
 
+      return
+      end
+c----------------------------------------------------------------------
+      subroutine hsmg_extrude_acc_1(arr1,nx,ny,nz)
+      include 'SIZE'
+      include 'INPUT'
+      integer nx,ny,nz
+      real arr1(nx,ny,nz,nelv)
+
+      integer i,j,k,ie,i0,i1
+      i0=2
+      i1=nx-1
+
+!$ACC PARALLEL PRESENT(arr1)
+!$ACC LOOP GANG
+      do ie=1,nelv
+!$ACC LOOP VECTOR COLLAPSE(2)
+         do k=i0,i1
+         do j=i0,i1
+            arr1(1,j,k,ie)  = arr1(3,j,k,ie)
+            arr1(nx,j,k,ie) = arr1(nx-2,j,k,ie)
+         enddo
+         enddo
+!$ACC LOOP VECTOR COLLAPSE(2)
+         do k=i0,i1
+         do i=i0,i1
+            arr1(i,1,k,ie) = arr1(i,3,k,ie)
+            arr1(i,nx,k,ie) = arr1(i,nx-2,k,ie)
+         enddo
+         enddo
+!$ACC LOOP VECTOR COLLAPSE(2)
+         do j=i0,i1
+         do i=i0,i1
+            arr1(i,j,1,ie) = arr1(i,j,3,ie)
+            arr1(i,j,nx,ie) = arr1(i,j,nx-2,ie)
+         enddo
+         enddo
+         enddo
+!$ACC END PARALLEL
       return
       end
 c----------------------------------------------------------------------
