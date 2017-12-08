@@ -35,6 +35,10 @@ c      COMMON /SCRCG/ DUMM10(LX1,LY1,LZ1,LELT,1)
 
       call get_session_info(intracomm)
 
+#if defined (_OPENACC) && defined (MPI)
+      call set_device
+#endif
+
       etimes = dnekclock()
       istep  = 0
       tpp    = 0.0

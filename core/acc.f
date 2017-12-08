@@ -1656,3 +1656,71 @@ c
 c      return
 c      end
 c-------------------------------------------------------------------
+#if defined (_OPENACC) && defined (MPI)
+      subroutine set_device
+c     Adapted from "PGI Compiers & Tools: Using OpenACC with MPI
+c     Tutorial", NVIDIA Corporation, 2017.  
+      use iso_c_binding
+      use openacc
+      include 'mpif.h'
+      common /nekmpi/ nid,np,nekcomm,nekgroup,nekreal
+
+      interface
+         function gethostid() BIND(C)
+            use iso_c_binding
+            integer (C_INT) :: gethostid
+         end function gethostid
+      end interface
+
+      integer, dimension(np) :: hostids, localprocs
+      integer :: hostid, ierr, numdev, mydev, i, numlocal
+      integer :: setDevice
+
+c     get the hostids so we can determine what other processes are on
+c     this node
+      hostid = gethostid()
+      CALL mpi_allgather(hostid,1,MPI_INTEGER,hostids,1,MPI_INTEGER, 
+     &   nekcomm,ierr)
+
+c     determine which processors are on this node
+      numlocal=0
+      localprocs=0
+      do i=1,np
+         if (hostid .eq. hostids(i)) then
+            localprocs(i)=numlocal
+            numlocal = numlocal+1
+         endif
+      enddo
+c     get the number of devices on this node
+      numdev = acc_get_num_devices(ACC_DEVICE_NVIDIA)
+      if (numdev .lt. 1) then
+         write(6,*) nid,
+     &   'ERROR: There are no devices available on this host.
+     &   ABORTING.'
+         call exitt
+      endif
+c     print a warning if the number of devices is less then the number
+c     processes on this node. Having multiple processes share devices
+c     is not recommended.
+      if (numdev .lt. numlocal) then
+         if (localprocs(nid+1).eq.1) then
+         ! print the message only once per node
+         write(6,*) nid, 
+     &      'WARNING: The number of process is greater then 
+     &      the number of GPUs.'
+         endif
+         mydev = mod(localprocs(nid+1),numdev)
+      else
+         mydev = localprocs(nid+1)
+      endif
+
+      call acc_set_device_num(mydev,ACC_DEVICE_NVIDIA)
+      call acc_init(ACC_DEVICE_NVIDIA)
+
+c     ROR: 2017-12-08: mydev isn't used later in the program.
+c     If we need it again, we'll have to set it in a common block
+c     setDevice = mydev
+      end subroutine set_device
+#endif
+
+c-------------------------------------------------------------------
