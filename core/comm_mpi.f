@@ -188,7 +188,8 @@ c     direct, if available.  However, I have not tested it.  This is
 c     based on demonstrations from:
 c     https://www.olcf.ornl.gov/tutorials/gpudirect-mpich-enabled-cuda/#OpenACC_Fortran
 
-!$ACC UPDATE HOST(x)
+!$acc data present(x,w)
+!$acc host_data use_device(x,w)
       if (op.eq.'+  ') then
          call mpi_allreduce (x,w,n,nekreal,mpi_sum ,nekcomm,ierr)
       elseif (op.EQ.'M  ') then
@@ -201,7 +202,8 @@ c     https://www.olcf.ornl.gov/tutorials/gpudirect-mpich-enabled-cuda/#OpenACC_
          write(6,*) nid,' OP ',op,' not supported.  ABORT in GOP.'
          call exitt
       endif
-!$ACC UPDATE DEVICE(w)
+!$acc end host_data
+!$acc end data
 
       call copy_acc(x,w,n)
 
