@@ -119,7 +119,7 @@ NOBJS_C = $(patsubst %,$(OBJDIR)/%,$(TMP2))
 NOBJS  = $(NOBJS_F) $(NOBJS_C)
 
 L0 = $(G) -O0
-L2 = $(G) -O2
+L2 = $(G) -O3
 L3 = $(G) -O3
 
 FL0   = $(L0) $(FFLAGS) $(PPS_F) -I$(CASEDIR) -I$S -I$(OPT_INCDIR) 

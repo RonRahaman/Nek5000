@@ -188,8 +188,12 @@ c     direct, if available.  However, I have not tested it.  This is
 c     based on demonstrations from:
 c     https://www.olcf.ornl.gov/tutorials/gpudirect-mpich-enabled-cuda/#OpenACC_Fortran
 
+#ifdef GPUDIRECT
 !$acc data present(x,w)
 !$acc host_data use_device(x,w)
+#else
+!$acc update host(x)
+#endif
       if (op.eq.'+  ') then
          call mpi_allreduce (x,w,n,nekreal,mpi_sum ,nekcomm,ierr)
       elseif (op.EQ.'M  ') then
@@ -202,11 +206,13 @@ c     https://www.olcf.ornl.gov/tutorials/gpudirect-mpich-enabled-cuda/#OpenACC_
          write(6,*) nid,' OP ',op,' not supported.  ABORT in GOP.'
          call exitt
       endif
+#ifdef GPUDIRECT
 !$acc end host_data
 !$acc end data
-
+#else
+!$acc update device(w)
+#endif
       call copy_acc(x,w,n)
-
 #else
 
 c     ROR: 2017-06-03:  On a single-node, allreduce is a null op.
