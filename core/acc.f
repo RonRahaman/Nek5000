@@ -1656,7 +1656,7 @@ c
 c      return
 c      end
 c-------------------------------------------------------------------
-#if defined (_OPENACC) && defined (MPI)
+#if defined (_OPENACC) && defined (MPI) && defined(SET_DEVICE)
       subroutine set_device
 c     Adapted from "PGI Compiers & Tools: Using OpenACC with MPI
 c     Tutorial", NVIDIA Corporation, 2017.  

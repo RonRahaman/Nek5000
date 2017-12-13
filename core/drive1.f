@@ -35,7 +35,7 @@ c      COMMON /SCRCG/ DUMM10(LX1,LY1,LZ1,LELT,1)
 
       call get_session_info(intracomm)
 
-#if defined (_OPENACC) && defined (MPI)
+#if defined (_OPENACC) && defined (MPI) && defined(SET_DEVICE)
       call set_device
 #endif
 
