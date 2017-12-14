@@ -10,9 +10,10 @@ c-----------------------------------------------------------------------
       common /tdarray/ diagt(maxcg),upper(maxcg)
       common /scrcg/ d(lg), scalar(2)
       common /scrcg2/ r(lg), w(lg), p(lg), z(lg)
+      common /fastmd/ ifdfrm(lelt)
 
 !$acc enter data copyin(xm1,ym1,zm1,
-!$acc&                  dxm1,dxtm1,w3m1, 
+!$acc&                  dxm1,dxtm1,dym1,dzm1,w3m1, 
 !$acc&                  bm1,bm1lag,binvm1,bintm1, 
 !$acc&                  jacm1,jacmi, 
 !$acc&                  rxm1,sxm1,txm1, 
@@ -29,7 +30,8 @@ c-----------------------------------------------------------------------
 !$acc&                  cbc,bc, 
 !$acc&                  param,nelfld, 
 !$acc&                  diagt,upper, 
-!$acc&                  d,scalar,r,w,p,z)
+!$acc&                  d,scalar,r,w,p,z,
+!$acc&                  ifdfrm)
 
       return
       end
