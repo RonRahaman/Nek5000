@@ -169,13 +169,18 @@ c      COMMON /SCRCG/ DUMM10(LX1,LY1,LZ1,LELT,1)
 c-----------------------------------------------------------------------
       subroutine nek_solve
 
+
       include 'SIZE'
       include 'TSTEP'
       include 'INPUT'
       include 'CTIMER'
+      include 'mpif.h'
+
+      common /nekmpi/ nid_,np_,nekcomm,nekgroup,nekreal
 
       real*4 papi_mflops
       integer*8 papi_flops
+      double precision tstart, tend, tdiff, tdiff_all
 
       call nekgsync()
 
@@ -195,6 +200,9 @@ c-----------------------------------------------------------------------
 #endif
       call nek_comm_settings(isyc,itime)
       call nek_comm_startstat()
+
+!$acc wait
+      tstart = MPI_Wtime()
 
       istep  = 0
       msteps = 1
@@ -216,6 +224,9 @@ c-----------------------------------------------------------------------
       call plan4_acc_data_copyout_nstep
       call nek_comm_settings(isyc,0)
 
+!$acc wait
+      tend = MPI_Wtime()
+
       call comment
 
 c     check for post-processing mode
@@ -227,8 +238,22 @@ c     check for post-processing mode
          if(nio.eq.0) write(6,*) 'done :: userchk'
          call prepost (.true.,'his')
       else
-         if (nio.eq.0) write(6,'(/,A,/)') 
-     $      'end of time-step loop' 
+         tdiff = tend-tstart
+         call MPI_Reduce(tdiff,tdiff_all,1,MPI_DOUBLE_PRECISION,
+     &      MPI_SUM,0,nekcomm,ierr)
+         if (nio.eq.0)  then
+            write(6,'(/,A,/)') 
+     &         'end of time-step loop' 
+            write(6,'(A)') 'synched OpenACC solve times : '
+            write(6,'(A,1p1e13.5,A)') 
+     &         'Wall time on root               : ', tdiff, ' sec'
+            write(6,'(A,1p1e13.5,A)') 
+     &         'Avg Wall time per proc          : ', 
+     &         tdiff_all / np_, ' sec'
+            write(6,'(A,1p1e13.5,A)') 
+     &         'Avg Wall time per proc per tstep: ', 
+     &         tdiff_all / np_ / msteps, ' sec'
+         endif
       endif
 
 
