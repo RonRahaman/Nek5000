@@ -257,15 +257,71 @@ c     computes
 c     v = [A (x) A] u      or
 c     v = [A (x) A (x) A] u71
       subroutine hsmg_tnsr(v,nv,u,nu,A,At)
-      integer nv,nu
-      real v(1),u(1),A(1),At(1)
       include 'SIZE'
       include 'INPUT'
+      integer nv,nu
+      real v(nv*nv*nv,nelt),u(nu*nu*nu,nelt),A(nv,nu),At(nu,nv)
+      parameter (lwk=(lx1+2)*(ly1+2)*(lz1+2))
+      common /hsmgw/ work(0:lwk-1),work2(0:lwk-1)
       if (.not. if3d) then
          call hsmg_tnsr2d(v,nv,u,nu,A,At)
       else
 #ifdef _OPENACC
-         call hsmg_tnsr3d_acc(v,nv,u,nu,A,At,At)
+         !-------------------------------------------------------------
+         ! Inlining 
+         ! call hsmg_tnsr3d_acc(v,nv,u,nu,A,At,At)
+         !-------------------------------------------------------------
+!$ACC PARALLEL LOOP PRESENT_OR_COPY(v,u,A,Bt,Ct) GANG
+!$ACC&              PRIVATE(work,work2)
+         do ie=1,nelt
+!$ACC LOOP COLLAPSE(2) VECTOR
+            do j=1,nu*nu
+            do i=1,nv
+               i0 = i + nv*(j-1)
+               tmp = 0.0
+!$ACC LOOP SEQ
+               do k=1,nu
+                  k0 = k + nu*(j-1)
+                  tmp = tmp + A(i,k) * u(k0,ie)
+               enddo
+               work(i0) = tmp
+            enddo
+            enddo
+!$ACC LOOP COLLAPSE(3) VECTOR
+            do i=1,nu
+            do j=1,nv
+            do l=1,nv
+               i0 = l + nv*(j-1) + nv*nv*(i-1)
+               tmp = 0.0
+!$ACC LOOP SEQ
+               do k=1,nu
+                  j0 = l + nv*(k-1) + nv*nu*(i-1)
+                  k0 = k + nu*(j-1)
+                  tmp = tmp + work(j0)*At(k,j)
+               enddo
+               work2(i0) = tmp
+            enddo
+            enddo
+            enddo
+!$ACC LOOP COLLAPSE(2) VECTOR
+            do j=1,nv
+            do i=1,nv*nv
+               j0 = i + nv*nv*(j-1)
+               tmp = 0.0
+!$ACC LOOP SEQ
+               do k=1,nu
+                  i0 = i + nv*nv*(k-1)
+                  k0 = k + nu*(j-1)
+                  tmp = tmp + work2(i0)*At(k,j)
+               enddo
+               v(j0,ie) = tmp
+            enddo
+            enddo
+         enddo
+         !-------------------------------------------------------------
+         ! End Inlining 
+         ! call hsmg_tnsr3d_acc(v,nv,u,nu,A,At,At)
+         !-------------------------------------------------------------
 #else
          call hsmg_tnsr3d    (v,nv,u,nu,A,At,At)
 #endif
@@ -2640,7 +2696,7 @@ c     if_hybrid = .false.   ! to convergence efficiency
 
 !$ACC UPDATE HOST(r(1:nelt*ldim**2))
       call hsmg_coarse_solve ( e(is) , r ) ! e  := A   r
-!$ACC UPDATE DEVICE(e(is:is-1+nelt*ldim**2))
+!$ACC UPDATE DEVICE(e(is:))
 
       call h1mg_mask(e(is),mg_imask(p_msk),nel)       !  1     1   1
 
