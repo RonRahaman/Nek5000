@@ -175,11 +175,10 @@ c-----------------------------------------------------------------------
       parameter (lt=lx1*ly1*lz1*lelt)
       common /scrmg/ e(2*lt),w(lt),r(lt)
       parameter (lwk=(lx1+2)*(ly1+2)*(lz1+2))
-      common /hsmgw/ work(0:lwk-1),work2(0:lwk-1)
       common /ctmp0/ w1   (lx1,ly1,lz1,lelt)
      $             , w2   (lx1,ly1,lz1,lelt)
 
-!$acc enter data create(work,work2)
+!$acc enter data create(acc_mg_work, acc_mg_work2)
 !$acc enter data copyin(mg_mask,mg_imask,pmask)
 !$acc enter data copyin(mg_jht,mg_jh,mg_rstr_wt,mg_schwarz_wt)
 !$acc enter data copyin(mg_work,mg_fast_s,mg_fast_d)

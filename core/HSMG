@@ -84,3 +84,6 @@ c     Specific to h1 multigrid:
      $      , p_mg_msk (lmgx,ldimt1)
       common /mgh1i/ mg_h1_lmax, mg_h1_n, p_mg_h1, p_mg_h2, p_mg_b
      $              , p_mg_g, p_mg_msk
+      parameter (acc_lwk=(lx1+2)*(ly1+2)*(lz1+2))
+      common /acc_hsmgw/ acc_mg_work(0:acc_lwk-1),
+     $                   acc_mg_work2(0:acc_lwk-1)
