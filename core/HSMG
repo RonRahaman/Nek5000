@@ -58,7 +58,9 @@ c
      $   , mg_solve_r   (0:lmg_solve*lelt-1)
 c
      $   , mg_h1        (0:lmg_g*lelt-1)
+     $   , mg_h1_equiv  (0:lmg_g*lelt-1)
      $   , mg_h2        (0:lmg_g*lelt-1)
+     $   , mg_h2_equiv  (0:lmg_g*lelt-1)
      $   , mg_b         (0:lmg_g*lelt-1)
      $   , mg_g         (0:lmg_g*((ldim-1)*3)*lelt-1) !metrics matrices
 c

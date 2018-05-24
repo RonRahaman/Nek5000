@@ -219,37 +219,50 @@ c----------------------------------------------------------------------
       mg_mask_index(l,mg_fld)=i
       end
 c----------------------------------------------------------------------
-      subroutine hsmg_intp(uf,uc,l) ! l is coarse level
-      real uf(1),uc(1)
-      integer l
+      subroutine hsmg_intp(uf,nf,uc,nc,l) ! l is coarse level
       include 'SIZE'
+      real uf(nf*nf*nf,nelt), 
+     $     uc(nc*nc*nc,nelt)
+      integer l
       include 'HSMG'
-      call hsmg_tnsr(uf,mg_nh(l+1),uc,mg_nh(l),mg_jh(1,l),mg_jht(1,l))
+      write(*,*) 'rons break'
+!$ACC DATA PRESENT(uc,uf) PCOPY(mg_jh,mg_jht)
+      !call hsmg_tnsr(uf,mg_nh(l+1),uc,mg_nh(l),mg_jh(1,l),mg_jht(1,l))
+      call hsmg_tnsr(uf,nf,uc,nc,mg_jh(1,l),mg_jht(1,l))
+!$ACC END DATA
       return
       end
 c----------------------------------------------------------------------
-      subroutine hsmg_rstr(uc,uf,l) ! l is coarse level
-      real uf(1),uc(1)
-      integer l
+      subroutine hsmg_rstr(uc,nc,uf,nf,l) ! l is coarse level
       include 'SIZE'
+      real uf(nf*nf*nf,nelt), 
+     $     uc(nc*nc*nc,nelt)
+      integer l
       include 'HSMG'
+!$ACC DATA PRESENT(uc,uf) PCOPY(mg_jht,mg_jh)
       if(l.ne.mg_lmax-1)
      $   call hsmg_do_wt(uf,mg_rstr_wt(mg_rstr_wt_index(l+1,mg_fld))
      $                     ,mg_nh(l+1),mg_nh(l+1),mg_nhz(l+1))
-      call hsmg_tnsr(uc,mg_nh(l),uf,mg_nh(l+1),mg_jht(1,l),mg_jh(1,l))
+      !call hsmg_tnsr(uc,mg_nh(l),uf,mg_nh(l+1),mg_jht(1,l),mg_jh(1,l))
+      call hsmg_tnsr(uc,nc,uf,nf,mg_jht(1,l),mg_jh(1,l))
       call hsmg_dssum(uc,l)
+!$ACC END DATA
       return
       end
 c----------------------------------------------------------------------
-      subroutine hsmg_rstr_no_dssum(uc,uf,l) ! l is coarse level
-      real uf(1),uc(1)
-      integer l
+      subroutine hsmg_rstr_no_dssum(uc,nc,uf,nf,l) ! l is coarse level
       include 'SIZE'
+      real uf(nf*nf*nf,nelt), 
+     $     uc(nc*nc*nc,nelt)
+      integer l
       include 'HSMG'
+!$ACC DATA PRESENT(uc,uf) PCOPY(mg_jht,mg_jh)
       if(l.ne.mg_lmax-1)
      $   call hsmg_do_wt(uf,mg_rstr_wt(mg_rstr_wt_index(l+1,mg_fld))
      $                     ,mg_nh(l+1),mg_nh(l+1),mg_nhz(l+1))
-      call hsmg_tnsr(uc,mg_nh(l),uf,mg_nh(l+1),mg_jht(1,l),mg_jh(1,l))
+      ! call hsmg_tnsr(uc,mg_nh(l),uf,mg_nh(l+1),mg_jht(1,l),mg_jh(1,l))
+      call hsmg_tnsr(uc,nc,uf,nf,mg_jht(1,l),mg_jh(1,l))
+!$ACC END DATA
       return
       end
 c----------------------------------------------------------------------
@@ -257,10 +270,12 @@ c     computes
 c     v = [A (x) A] u      or
 c     v = [A (x) A (x) A] u71
       subroutine hsmg_tnsr(v,nv,u,nu,A,At)
-      integer nv,nu
-      real v(1),u(1),A(1),At(1)
       include 'SIZE'
       include 'INPUT'
+      integer nv,nu
+      real v(nv*nv*nv,nelt),u(nu*nu*nu,nelt)
+      real A(nv,nu),At(nu,nv)
+!$ACC DATA PRESENT(u,v,A,At)
       if (.not. if3d) then
          call hsmg_tnsr2d(v,nv,u,nu,A,At)
       else
@@ -270,6 +285,7 @@ c     v = [A (x) A (x) A] u71
          call hsmg_tnsr3d    (v,nv,u,nu,A,At,At)
 #endif
       endif
+!$ACC END DATA 
       return
       end
 c----------------------------------------------------------------------
@@ -296,11 +312,11 @@ c     v = [C (x) B (x) A] u
       include 'SIZE'
       include 'HSMG'
       integer nv,nu
-      real v(lx1*ly1*lz1,lelt),u(lx1*ly1*lz1,lelt)
+      real v(nu*nu*nu,nelt),u(nu*nu*nu,nelt)
       real A(nv,nu),Bt(nu,nv),Ct(nu,nv)
       integer ie, i
 
-!$ACC PARALLEL LOOP PRESENT_OR_COPY(v,u,A,Bt,Ct) GANG
+!$ACC PARALLEL LOOP PCOPY(v,u,A,Bt,Ct) GANG
 !$ACC&              PRIVATE(acc_mg_work,acc_mg_work2)
       do ie=1,nelt
 !$ACC LOOP COLLAPSE(2) VECTOR
@@ -523,7 +539,7 @@ c----------------------------------------------------------------------
          enddo
       else
          !FIXME: Possibly rewrite as 3 loops of collapse(3)
-!$ACC PARALLEL LOOP GANG PRESENT_OR_COPY(arr1,arr2)
+!$ACC PARALLEL LOOP GANG PCOPY(arr1,arr2)
          do ie=1,nelv
 !$ACC LOOP VECTOR COLLAPSE(2)
             do k=i0,i1
@@ -775,7 +791,7 @@ c----------------------------------------------------------------------
 
       integer i,j,k,ie
 !$ACC   PARALLEL LOOP GANG VECTOR COLLAPSE(4)
-!$ACC&  PRESENT_OR_COPY(a,b)
+!$ACC&  PCOPY(a,b)
       do ie=1,nelv
       do k=1,n
       do j=1,n
@@ -1814,7 +1830,10 @@ c        if (nid.eq.0) write(6,*) l,nt,rmax,' rmax2'
          !          T
          ! r   :=  J w
          !  l
-         call hsmg_rstr(mg_solve_r(mg_solve_index(l,mg_fld)),mg_work2,l)
+         call hsmg_rstr(
+     $      mg_solve_r(mg_solve_index(l,mg_fld)), mg_nh(l),
+     $      mg_work2, mg_nh(l+1),
+     $      l)
 
          ! w  := r
          !        l
@@ -1839,7 +1858,9 @@ c        call exitti('quit in mg$',l)
       enddo
 
       call hsmg_rstr_no_dssum(
-     $   mg_solve_r(mg_solve_index(1,mg_fld)),mg_work2,1)
+     $   mg_solve_r(mg_solve_index(1,mg_fld)), mg_nh(l),
+     $   mg_work2, mg_nh(l+1),
+     $   1)
 
       nzw = ndim-1
 
@@ -1859,8 +1880,12 @@ c        call exitti('quit in mg$',l)
          nt = mg_nh(l)*mg_nh(l)*mg_nhz(l)*nelv
          ! w   :=  J e
          !            l-1
-         call hsmg_intp
-     $      (mg_work2,mg_solve_e(mg_solve_index(l-1,mg_fld)),l-1)
+!$ACC DATA PCOPY(mg_work2, mg_solve_e)
+         call hsmg_intp(
+     $      mg_work2, mg_nh(l+1),
+     $      mg_solve_e(mg_solve_index(l-1,mg_fld)), mg_nh(l),
+     $      l-1)
+!$ACC END DATA
 
          ! e   :=  e  + w
          !  l       l
@@ -1874,8 +1899,12 @@ c        call exitti('quit in mg$',l)
       ! w   :=  J e
       !            m-1
 
-      call hsmg_intp(mg_work2,
-     $   mg_solve_e(mg_solve_index(l-1,mg_fld)),l-1)
+!$ACC DATA PCOPY(mg_work2, mg_solve_e)
+      call hsmg_intp(
+     $   mg_work2, mg_nh(l+1),
+     $   mg_solve_e(mg_solve_index(l-1,mg_fld)), mg_nh(l),
+     $   l-1)
+!$ACC END DATA
 
       if (if_hybrid.and.istep.eq.1) then
          ! ecrs := E e_c
@@ -2268,8 +2297,17 @@ c     call exitt
          im = is
          is = is - n
          n  = mg_h1_n(l,mg_fld)
-         call hsmg_intp (w,e(im),l-1)                 ! w   :=  J e
-         i1=is-1                                      !            l-1
+!         call hsmg_intp (
+!     $      w, mg_nh(l+1),
+!     $      e(im), mg_nh(l),
+!     $      l-1)                 ! w   :=  J e
+!         i1=is-1                                      !            l-1
+!$ACC DATA PRESENT(e)
+         call hsmg_tnsr3d_acc(
+     $      w, mg_nh(l),
+     $      e(im), mg_nh(l-1),
+     $      mg_jh(1,l-1), mg_jht(1,l-1), mg_jht(1,l-1))
+!$ACC END DATA
 !$ACC PARALLEL LOOP PRESENT(e,w)
          do i=1,n
             e(i1+i) = e(i1+i) + w(i)                  ! e   :=  e  + w
@@ -2280,7 +2318,12 @@ c     call exitt
       l  = mg_h1_lmax
       n  = mg_h1_n(l,mg_fld)
       im = is  ! solve index
-      call hsmg_intp(w,e(im),l-1)                     ! w   :=  J e
+!$ACC DATA PCOPY(w, e)
+      call hsmg_intp(
+     $   w, mg_nh(l+1),
+     $   e(im), mg_nh(l),
+     $   l-1)                     ! w   :=  J e
+!$ACC END DATA
 
 !$ACC PARALLEL LOOP GANG VECTOR PRESENT(z,w)
       do i = 1,n                !            l-1
@@ -3059,12 +3102,14 @@ c     As a first pass, rely on the cheesy common-block interface to get h1
       p_mg_h1(l,mg_fld) = 0
       n                 = mg_h1_n(l,mg_fld)
 
-      call copy (mg_h1,h1,n)   ! Fine grid is just original h1
+      call copy (mg_h1,h1,n)         ! Fine grid is just original h1
+      call copy (mg_h1_equiv,h1,n)   ! Fine grid is just original h1
 
       nx = mg_nh(l)
       ny = mg_nh(l)
       nz = mg_nhz(l)
 
+!!$ACC DATA PCOPY(mg_h1, mg_h1_equiv, mg_jhfc, mg_jhfct)
       do l=mg_h1_lmax-1,1,-1
 
          p_mg_h1(l,mg_fld) = p_mg_h1(l+1,mg_fld) + n
@@ -3073,9 +3118,20 @@ c     As a first pass, rely on the cheesy common-block interface to get h1
          pf                = p_mg_h1(l+1,mg_fld)
          pc                = p_mg_h1(l  ,mg_fld)
 
-         call hsmg_intp_fc (mg_h1(pc),mg_h1(pf),l)
+         ! ROR: Aliasing problem??
+!        call hsmg_intp_fc (mg_h1(pc),mg_nh(l),mg_h1_equiv(pf),
+!    $      mg_nh(l+1),l)
+!         call hsmg_tnsr(
+!     $      mg_h1(pc), mg_nh(l),
+!     $      mg_h1_equiv(pf), mg_nh(l+1),
+!     $      mg_jhfc(1,l), mg_jhfct(1,l))
+         call hsmg_tnsr3d_acc(
+     $      mg_h1(pc), mg_nh(l),
+     $      mg_h1_equiv(pf), mg_nh(l+1),
+     $      mg_jhfc(1,l), mg_jhfct(1,l), mg_jhfct(1,l))
 
       enddo
+!!$ACC END DATA
 
       p_h1 = p_mg_h1(l0,mg_fld)
 
@@ -3098,7 +3154,8 @@ c     As a first pass, rely on the cheesy common-block interface to get h2
       p_mg_h2(l,mg_fld) = 0
       n                 = mg_h1_n(l,mg_fld)
 
-      call copy (mg_h2,h2,n)   ! Fine grid is just original h2
+      call copy (mg_h2,h2,n)       ! Fine grid is just original h2
+      call copy (mg_h2_equiv,h2,n) ! Fine grid is just original h2
 
       nx = mg_nh(l)
       ny = mg_nh(l)
@@ -3112,7 +3169,14 @@ c     As a first pass, rely on the cheesy common-block interface to get h2
          pf                = p_mg_h2(l+1,mg_fld)
          pc                = p_mg_h2(l  ,mg_fld)
 
-         call hsmg_intp_fc (mg_h2(pc),mg_h2(pf),l)
+         ! ROR: Aliasing problem??
+!!$ACC DATA PCOPY(mg_h2(pc:), mg_h2(pf:))
+!        call hsmg_intp_fc (mg_h2(pc),mg_nh(l),mg_h2(pf),mg_nh(l+1),l)
+         call hsmg_tnsr3d_acc(
+     $      mg_h2(pc), mg_nh(l),
+     $      mg_h2_equiv(pf), mg_nh(l+1),
+     $      mg_jhfc(1,l), mg_jhfct(1,l), mg_jhfct(1,l))
+!!$ACC END DATA
 
       enddo
 
@@ -3121,17 +3185,14 @@ c     As a first pass, rely on the cheesy common-block interface to get h2
       return
       end
 c-----------------------------------------------------------------------
-      subroutine hsmg_intp_fc(uc,uf,l) ! l is coarse level
-
+      subroutine hsmg_intp_fc(uc,nc,uf,nf,l) ! l is coarse level
       include 'SIZE'
       include 'HSMG'
-
-      real uc(1),uf(1)
-
-
-      nc = mg_nh(l)
-      nf = mg_nh(l+1)
+      real uf(nf*nf*nf,nelt), 
+     $     uc(nc*nc*nc,nelt)
+!$ACC DATA PRESENT(uc,uf) PCOPY(mg_jhfc(1,l:), mg_jhfct(1,l:))
       call hsmg_tnsr(uc,nc,uf,nf,mg_jhfc(1,l),mg_jhfct(1,l))
+!$ACC END DATA
 
       return
       end
