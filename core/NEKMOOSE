@@ -8,7 +8,6 @@
       common /tot_surf/ nw_bdt       
       common /data_reference/ plmask(lelt), pflmask(lelt), 
      & pplist(lelt), offset, nw_bd1
-      common /data_cloud/ pc_t(lsurf_m), pc_f(lsurf_m)
       common /test_passing/ flux_moose, temp_nek
       real pc_x, pc_y, pc_z, pc_flag, pc_t, pc_f
       integer plmask, pflmask, pllist, offset, nw_bd1, nw_bdt 
