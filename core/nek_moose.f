@@ -138,6 +138,19 @@ C=======================================================================
       enddo 
       enddo 
 
+c
+c      Uncomment for testing
+c
+c      if (nid.eq.0) then
+c      do i=1,3
+c      do j=1,4
+c      k=(i-1)*3+j  
+c      write(6,*)i,j," - (x,y,z):",pc_x(k),pc_y(k),pc_z(k) 
+c      enddo
+c      enddo
+c      endif       
+c      call exitt();
+
       return
       end
 c-----------------------------------------------------------------------
@@ -164,45 +177,45 @@ c-----------------------------------------------------------------------
       i_us=(pplist(e)-1)*4
  
       if (pflmask(e).eq.1) then
-      vpf(i_us)=fu(1,1,1,e)
-      vpf(i_us+1)=fu(lx1,1,1,e)
-      vpf(i_us+3)=fu(1,1,lx1,e)
-      vpf(i_us+2)=fu(lx1,1,lx1,e)
+      vpf(i_us+1)=fu(1,1,1,e)
+      vpf(i_us+2)=fu(lx1,1,1,e)
+      vpf(i_us+4)=fu(1,1,lx1,e)
+      vpf(i_us+3)=fu(lx1,1,lx1,e)
       endif
 
       if (pflmask(e).eq.2) then
-      vpf(i_us)=fu(lx1,1,1,e)
-      vpf(i_us+1)=fu(lx1,lx1,1,e)
-      vpf(i_us+3)=fu(lx1,1,lx1,e)
-      vpf(i_us+2)=fu(lx1,lx1,lx1,e)
+      vpf(i_us+1)=fu(lx1,1,1,e)
+      vpf(i_us+2)=fu(lx1,lx1,1,e)
+      vpf(i_us+4)=fu(lx1,1,lx1,e)
+      vpf(i_us+3)=fu(lx1,lx1,lx1,e)
       endif
 
       if (pflmask(e).eq.3)  then
-      vpf(i_us)=fu(1,lx1,1,e)
-      vpf(i_us+1)=fu(lx1,lx1,1,e)
-      vpf(i_us+3)=fu(1,lx1,lx1,e)
-      vpf(i_us+2)=fu(lx1,lx1,lx1,e)
+      vpf(i_us+1)=fu(1,lx1,1,e)
+      vpf(i_us+2)=fu(lx1,lx1,1,e)
+      vpf(i_us+4)=fu(1,lx1,lx1,e)
+      vpf(i_us+3)=fu(lx1,lx1,lx1,e)
       endif
 
       if (pflmask(e).eq.4) then
-      vpf(i_us)=fu(1,1,1,e)
-      vpf(i_us+1)=fu(1,lx1,1,e)
-      vpf(i_us+3)=fu(1,1,lx1,e)
-      vpf(i_us+2)=fu(1,lx1,lx1,e)
+      vpf(i_us+1)=fu(1,1,1,e)
+      vpf(i_us+2)=fu(1,lx1,1,e)
+      vpf(i_us+4)=fu(1,1,lx1,e)
+      vpf(i_us+3)=fu(1,lx1,lx1,e)
       endif
 
       if (pflmask(e).eq.5) then
-      vpf(i_us)=fu(1,1,1,e)
-      vpf(i_us+1)=fu(lx1,1,1,e)
-      vpf(i_us+3)=fu(1,lx1,1,e)
-      vpf(i_us+2)=fu(lx1,lx1,1,e)
+      vpf(i_us+1)=fu(1,1,1,e)
+      vpf(i_us+2)=fu(lx1,1,1,e)
+      vpf(i_us+4)=fu(1,lx1,1,e)
+      vpf(i_us+3)=fu(lx1,lx1,1,e)
       endif
 
       if (pflmask(e).eq.6) then
-      vpf(i_us)=fu(1,1,lx1,e)
-      vpf(i_us+1)=fu(lx1,1,lx1,e)
-      vpf(i_us+3)=fu(1,lx1,lx1,e)
-      vpf(i_us+2)=fu(lx1,lx1,lx1,e)
+      vpf(i_us+1)=fu(1,1,lx1,e)
+      vpf(i_us+2)=fu(lx1,1,lx1,e)
+      vpf(i_us+4)=fu(1,lx1,lx1,e)
+      vpf(i_us+3)=fu(lx1,lx1,lx1,e)
       endif
 
       endif
