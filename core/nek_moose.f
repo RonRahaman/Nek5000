@@ -536,25 +536,62 @@ C=======================================================================
       ntot=nx1*ny1*nz1*nelt
 !     Call to rassign and spectral interpolation
 
+!     Testing on pc_f
+      ntot=nw_bdt*4
+      pc_f_max=glmax(pc_f,ntot)
+      pc_f_min=glmin(pc_f,ntot) 
+
       call rassign(flux_low,pc_f)
-  
+!     Testing on flux_low
+      ntot=nelt*3*3*3
+      fl_max=glmax(flux_low,ntot)
+      fl_min=glmin(flux_low,ntot)
+
       lx_low=3
       call int_surf12(flux_recon,flux_low,lx1,lx_low,lelt) 
 
-c      do e=1,nelt
-c        do f=1,6
-c          call surface_int(sint,sarea,flux_recon,e,f)
-c          if (cbc(f,e,1).eq.'W  ') then
-c           sint1=sint1+sint
-c           sarea1=sarea1+sarea
-c          endif
-c         enddo
-c      enddo
+      ntot=nelt*lx1*lx1*lx1
+      fh_max=glmax(flux_recon,ntot)
+      fh_min=glmin(flux_recon,ntot)
 
-c      call  gop(sint1,wtmp,'+  ',1)
-c      call  gop(sarea1,wtmp,'+  ',1)
+      if (nid.eq.0) then
+        write(6,*)"> Min/Max flux 1: ",pc_f_min,pc_f_max
+        write(6,*)"> Min/Max flux 2: ",fl_min,fl_max
+        write(6,*)"> Min/Max flux 3: ",fh_min,fh_max
+      endif
 
-c      flux_moose=sint1/sarea1
+
+      sint1=0.0
+      sarea1=0.0
+
+      do e=1,nelt
+        do f=1,6
+          call surface_int(sint,sarea,flux_recon,e,f)
+          if (cbc(f,e,1).eq.'W  ') then
+           sint1=sint1+sint
+           sarea1=sarea1+sarea
+          endif
+         enddo
+      enddo
+
+      call  gop(sint1,wtmp,'+  ',1)
+      call  gop(sarea1,wtmp,'+  ',1)
+
+      flux_moose1=sint1
+
+      if (nid.eq.0) then
+        write(6,*)"> Average reconstructed flux: ",flux_moose1
+        write(6,*)"> Imposing flux: ",flux_moose
+      endif
+
+      ntot  = lx1*ly1*lz1*nelt
+      scale=1.0
+      if (abs(flux_moose1).gt.0.0) scale = flux_moose/flux_moose1 
+      do i=1,ntot  
+         flux_recon(i,1,1,1)=flux_recon(i,1,1,1)*scale
+      enddo
+
+c      call exitt()  
 
       return
       end
