@@ -30,7 +30,7 @@
         enddo
       endif
 
-      do i=1,nelt
+      do e=1,nelt
          pplist(e)=pplist(e)+offset
       enddo
 
