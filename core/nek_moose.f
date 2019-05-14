@@ -7,9 +7,13 @@
 
       nxyz=lx1*ly1*lz1
 
+      ! Local element arrays containing surface information 
       nw_bd1 = 0
       do e=1,nelt
       eg = lglel(e)
+      pplist(e) = 0
+      pflmask(e) = 0
+      plmask(e) = 0 
       do f=1,6
         if (cbc(f,e,2).eq.'f  ') then
            nw_bd1=nw_bd1+1
@@ -20,6 +24,10 @@
       enddo
       enddo
 
+      ! Local TOTAL number of surfaces per processor  
+      do i=1,lp
+         tots_np(i)=0.0
+      enddo
       tots_np(nid+1)=nw_bd1
       call igop(tots_np,iwk,'+  ', np)
 
@@ -30,6 +38,7 @@
         enddo
       endif
 
+      ! Adding local offset 
       do e=1,nelt
          pplist(e)=pplist(e)+offset
       enddo
@@ -52,8 +61,10 @@
 c
 c      Uncomment for testing
 c
+c      write(6,*)"(nid, nw_bdt):",nid,nw_bdt
+c
 c      if (nid.eq.0) then
-c      do i=1,3
+c      do i=1,nw_bdt
 c      do j=1,4
 c      k=(i-1)*4+j
 c      write(6,*)i,j," - (x,y,z):",pc_x(k),pc_y(k),pc_z(k)
