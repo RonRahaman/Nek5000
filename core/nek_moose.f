@@ -233,6 +233,7 @@ C=======================================================================
       call check_ioinfo
       call set_outfld
       call userchk
+      call prepost (ifoutfld,'his')
       call in_situ_check()
 
       if (lastep .eq. 1) then
