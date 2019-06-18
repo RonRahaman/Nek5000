@@ -1,4 +1,4 @@
-      parameter (lsurf_m=1000)
+      parameter (lsurf_m=60000)
       common /point_cloudx/ pc_x(lsurf_m*4)
       common /point_cloudy/ pc_y(lsurf_m*4)
       common /point_cloudz/ pc_z(lsurf_m*4)
